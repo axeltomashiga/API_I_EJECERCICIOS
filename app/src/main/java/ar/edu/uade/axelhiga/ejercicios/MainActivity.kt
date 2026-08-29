@@ -23,43 +23,36 @@ class MainActivity : ComponentActivity() {
         setContent {
             EjerciciosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Presentacion ()
+                    FichaDelEstudiante ()
                 }
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    EjerciciosTheme {
-        Greeting("Android")
-    }
-}
-
 
 @Composable
-fun Presentacion() {
-    Column(modifier = Modifier.padding(start = 20.dp, top = 50.dp, end = 20.dp)) {
-        Text("Nombre")
-        Text("Carrera", fontWeight = FontWeight.Bold)
-        Text("Tecnología que el estudiante quiera aprender")
+fun FichaDelEstudiante() {
+    val nombre = "Ana"
+    val edad = 20
+    val promedio = 8.25
+    val cursaProgramacion = true
+    val proximoAnio = edad+1
+
+    Column(modifier = Modifier.padding(start = 20.dp, top = 50.dp, end = 20.dp, bottom = 20.dp)) {
+        Text("Nombre: $nombre")
+        Text("Edad : $edad")
+        Text("Promedio: $promedio")
+        Text("Curso: $cursaProgramacion")
+
+        Text("El proximo anio $nombre cumple $proximoAnio, ahora tiene $edad y esta estudiando programacion con un promedio de $promedio")
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun PresentacionPreview () {
+fun FichaDelEstudiantePreview () {
     EjerciciosTheme() {
-        Presentacion()
+        FichaDelEstudiante()
     }
 }
