@@ -38,14 +38,17 @@ fun FichaDelEstudiante() {
     val promedio = 8.25
     val cursaProgramacion = true
     val proximoAnio = edad+1
+    val materias: Int = 5
+    val ciudad: String = "Cordoba"
 
     Column(modifier = Modifier.padding(start = 20.dp, top = 50.dp, end = 20.dp, bottom = 20.dp)) {
         Text("Nombre: $nombre")
         Text("Edad : $edad")
         Text("Promedio: $promedio")
         Text("Curso: $cursaProgramacion")
-
         Text("El proximo anio $nombre cumple $proximoAnio, ahora tiene $edad y esta estudiando programacion con un promedio de $promedio")
+        Text("Materias: $materias")
+        Text("Ciudad: $ciudad")
     }
 }
 
