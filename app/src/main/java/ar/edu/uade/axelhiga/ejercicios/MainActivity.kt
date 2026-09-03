@@ -50,7 +50,7 @@ fun Estudiante() {
         DatoEstudiante("Nombre", "Ana")
         DatoEstudiante("Carrera", "Sistemas")
         DatoEstudiante("Anio", "1")
-        Text("Tiene ${descripcionEdad(20)}")
+        DatoEstudiante("Edad", descripcionEdad(20))
     }
 }
 @Composable
