@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,70 +41,32 @@ class MainActivity : ComponentActivity() {
         setContent {
             EjerciciosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Ficha()
+                    Contador()
                 }
             }
         }
     }
 }
 
-fun descripcionEdad(edad: Int): String {
-    return if (edad > 18) {
-        "$edad anios, es mayor de edad"
-    } else {
-        "$edad anios, es menor de edad"
-    }
-}
 @Composable
-fun Titulo(titulo: String) {
-    Text(titulo,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom=16.dp)
-    )
-}
+fun Contador() {
+    var contador by remember { mutableIntStateOf(0) }
+    Column(modifier = Modifier.padding(50.dp)) {
+        Text("Valor: $contador", modifier = Modifier.align(Alignment.CenterHorizontally), fontSize = 30.sp, fontWeight = FontWeight.Bold)
 
-@Composable
-fun Ficha() {
-    Column(modifier = Modifier.padding(top = 50.dp, start = 15.dp, end = 15.dp, bottom = 15.dp)) {
-        Titulo("Ficha del estudiante")
-        Estudiante()
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            Button(onClick = { }, modifier = Modifier.padding(end = 10.dp, start = 20.dp).background(color = Color.Black)) {
-                Text("Volver")
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Button(onClick = { contador++ }) {
+                Text("+1")
             }
-            Button(onClick = { } ) {
-                Text("Editar")
+
+            Button(onClick = { if (contador>0) contador-- }) {
+                Text("-1")
+            }
+
+            Button (onClick = { contador = 0 }) {
+                Text("Reset")
             }
         }
-        Row(modifier = Modifier.background(color = Color.Black).fillMaxWidth()) {
-            Button(onClick = { }) {
-                Text("Volver")
-            }
-            Button(onClick = { } ) {
-                Text("Editar")
-            }
-        }
-        Button(onClick = { }, Modifier.fillMaxWidth() ) {
-                Text("Nada")
-        }
-    }
-}
-
-
-@Composable
-fun Estudiante() {
-    Column() {
-        DatoEstudiante("Nombre", "Ana")
-        DatoEstudiante("Carrera", "Sistemas")
-        DatoEstudiante("Anio", "1")
-        DatoEstudiante("Edad", descripcionEdad(20))
-    }
-}
-@Composable
-fun DatoEstudiante(etiqueta: String, valor: String) {
-    Column() {
-        Text("$etiqueta: $valor")
     }
 }
 
@@ -107,6 +75,6 @@ fun DatoEstudiante(etiqueta: String, valor: String) {
 @Composable
 fun DatoEstudiantePreview () {
     EjerciciosTheme() {
-        DatoEstudiante("nombre", "Axel")
+        Contador()
     }
 }
