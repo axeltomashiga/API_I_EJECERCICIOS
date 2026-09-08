@@ -55,15 +55,18 @@ fun Contador() {
         Text("Valor: $contador", modifier = Modifier.align(Alignment.CenterHorizontally), fontSize = 30.sp, fontWeight = FontWeight.Bold)
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Button(onClick = { contador++ }) {
+            Button(modifier= Modifier.background(Color.Red).padding(16.dp).background(Color.Green),
+                onClick = { contador++ }) {
                 Text("+1")
             }
 
-            Button(onClick = { if (contador>0) contador-- }) {
+            Button(modifier= Modifier.background(Color.Green).padding(16.dp),
+                onClick = { if (contador>0) contador-- }) {
                 Text("-1")
             }
 
-            Button (onClick = { contador = 0 }) {
+            Button (modifier= Modifier.background(Color.Green).padding(16.dp),
+                onClick = { contador = 0 }) {
                 Text("Reset")
             }
         }
