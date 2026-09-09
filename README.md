@@ -100,3 +100,6 @@ Ocurre un proceso llamado recomposición (recomposition). Compose detecta que un
 
 ### 19. ¿Qué hace toIntOrNull()?
 Convierte un String a un Int, pero si no puede convertirlo, devuelve null en lugar de lanzar un error.
+
+### 20. Uso logcat
+Se utiliza con Log.d("etiqueta", "mensaje") para registrar mensajes de depuración en la consola.

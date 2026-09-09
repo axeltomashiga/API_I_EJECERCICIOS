@@ -1,10 +1,12 @@
 package ar.edu.uade.axelhiga.ejercicios
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -15,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,72 +34,82 @@ class MainActivity : ComponentActivity() {
         setContent {
             EjerciciosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ClasificadorDeEdad(Modifier.padding(innerPadding))
+                    Calculadora(Modifier.padding(innerPadding))
                 }
             }
         }
     }
 }
 
-fun clasificarEdad(edad : String) : String {
-    val edadInt = edad.toIntOrNull()
-
-    if (edadInt == null) {
-        return "Error: Ingresa una edad válida"
-    }else if (edadInt < 0) {
-        return "Error: Ingresa una edad válida"
-    }else if (edadInt < 18) {
-        return "Menor de edad"
+fun calcular(a:Double, b:Double, operacion:String) : String {
+    return when (operacion) {
+        "+" -> (a + b).toString()
+        "-" -> (a - b).toString()
+        "*" -> (a * b).toString()
+        "/" -> (a / b).toString()
+        else -> "Operación no válida"
     }
-    return "Mayor de edad"
-
-}
-
-fun clasificarEdadWhen(edad : String) : String {
-    val edadInt = edad.toIntOrNull()
-
-    val res = when {
-        edadInt == null -> "Error: Ingresa una edad válida"
-        edadInt < 0 -> "Error: Ingresa una edad válida"
-        edadInt in 0..17 -> "Menor de edad"
-        else -> "Mayor de edad"
-    }
-    return res
 }
 
 @Composable
-fun ClasificadorDeEdad(modifier: Modifier = Modifier) {
-    var nombre by remember { mutableStateOf("") }
-    var edad by remember { mutableStateOf("") }
+fun ButtonOperation(operation: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.padding(8.dp)
+    ) {
+        Text(operation)
+    }
+}
+
+@Composable
+fun Calculadora(modifier: Modifier = Modifier) {
+    Log.d("Calculadora", "Calculadora iniciando")
+    var numero1 by remember { mutableStateOf("") }
+    var numero2 by remember { mutableStateOf("") }
+    var operacion by remember { mutableStateOf("") }
     var resultado by remember { mutableStateOf("") }
-    Column(modifier = modifier.padding(start = 25.dp)) {
-        TextField(value = nombre,
-            label = { "Nombre" },
-            onValueChange = {
-            nombre = it
-            }
+    Log.d("Calculadora", "Calculadora iniciada")
+    Column(modifier = modifier) {
+        TextField(
+            value = numero1,
+            onValueChange = { numero1 = it },
+            label = { Text("Número 1") },
+            modifier = Modifier.padding(8.dp)
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        TextField(value = edad,
-            label = { "edad" },
-            onValueChange = {
-                edad = it
-            }
+        TextField(
+            value = numero2,
+            onValueChange = { numero2 = it },
+            label = { Text("Número 2") },
+            modifier = Modifier.padding(8.dp)
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button( onClick = {resultado = clasificarEdadWhen(edad)}) {
-            Text("Clasificar")
+        Row(modifier = Modifier.padding(8.dp)) {
+            ButtonOperation("+", onClick = { operacion = "+" })
+            ButtonOperation("-", onClick = { operacion = "-" })
+            ButtonOperation("*", onClick = { operacion = "*" })
+            ButtonOperation("/", onClick = { operacion = "/" })
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(resultado)
+        Button(
+            onClick = {
+                resultado = calcular(numero1.toDouble(), numero2.toDouble(), operacion)
+            },
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Text("Resultado")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Resultado: $resultado",
+            modifier = Modifier.padding(8.dp)
+        )
     }
 }
 
 
 @Preview(showBackground = true)
 @Composable
-fun ClasificadorDeEdadPreview () {
+fun CalculadoraPreview () {
     EjerciciosTheme() {
-        ClasificadorDeEdad()
+        Calculadora()
     }
 }
