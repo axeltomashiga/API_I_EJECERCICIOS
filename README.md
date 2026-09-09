@@ -97,3 +97,6 @@ Ocurre un proceso llamado recomposición (recomposition). Compose detecta que un
 
 ### 18. ¿Qué ocurre cuando cambia el estado?
 Ocurre un proceso llamado recomposición (recomposition). Compose detecta que un valor observado ha cambiado y vuelve a ejecutar automáticamente las funciones composables que leyeron ese estado para actualizar la pantalla con la nueva información.
+
+### 19. ¿Qué hace toIntOrNull()?
+Convierte un String a un Int, pero si no puede convertirlo, devuelve null en lugar de lanzar un error.
