@@ -124,4 +124,26 @@ Aislamiento visual: Posibilita diseñar y ajustar pantallas profundas o componen
 
 Menor consumo de recursos: Consume una fracción de la memoria RAM y procesamiento de CPU en comparación con una máquina virtual de Android (AVD) en ejecución continua.
 
+### 24. Clasificar cada elemento como Kotlin, Compose o Android SDK: val, fun, Button, @Composable, Intent, Context y Uri
+val	Kotlin
+Es una palabra reservada del lenguaje; indica que una variable es de solo lectura y su valor no se puede reasignar.
+
+fun	Kotlin	
+Es la palabra clave nativa del lenguaje utilizada para declarar cualquier función.
+
+Button	Compose
+Es un componente visual de la interfaz de usuario perteneciente a la librería Jetpack Compose.
+
+@Composable	Compose
+Es una anotación de la librería que transforma una función normal en una Vista de la interfaz gráfica que puede leer estados y dibujarlos.
+
+Intent Android SDK	
+Es un objeto de mensajería del sistema operativo Android utilizado para solicitar que se ejecute una acción (como compartir texto o abrir otra app).
+
+Context Android SDK	
+Es la herramienta del sistema que proporciona acceso a la información global de tu aplicación y permite comunicarse con el entorno de Android.
+
+Uri	Android SDK	
+Es una clase que utiliza Android para identificar recursos específicos, como la ruta de una imagen en la galería o una dirección web.
+
 
