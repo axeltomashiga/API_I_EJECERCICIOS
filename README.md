@@ -95,8 +95,8 @@ El modelo de diseño de Compose funciona envolviendo el contenido capa por capa 
 ### 17. ¿Qué ocurre cuando cambia el estado?
 Ocurre un proceso llamado recomposición (recomposition). Compose detecta que un valor observado ha cambiado y vuelve a ejecutar automáticamente las funciones composables que leyeron ese estado para actualizar la pantalla con la nueva información.
 
-### 18. ¿Qué ocurre cuando cambia el estado?
-Ocurre un proceso llamado recomposición (recomposition). Compose detecta que un valor observado ha cambiado y vuelve a ejecutar automáticamente las funciones composables que leyeron ese estado para actualizar la pantalla con la nueva información.
+### 18. ¿Qué diferencia hay entre cambiar una variable y actualizar una variable de estado observada por Compose?
+Variable de estado observada (mutableStateOf): Implementa el patrón Observer. Compose registra qué componentes leen el valor durante la composición; al actualizarse el estado, emite una notificación que agenda la recomposición de los componentes afectados, reflejando el cambio visualmente en la pantalla.
 
 ### 19. ¿Qué hace toIntOrNull()?
 Convierte un String a un Int, pero si no puede convertirlo, devuelve null en lugar de lanzar un error.
