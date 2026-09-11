@@ -103,3 +103,25 @@ Convierte un String a un Int, pero si no puede convertirlo, devuelve null en lug
 
 ### 20. Uso logcat
 Se utiliza con Log.d("etiqueta", "mensaje") para registrar mensajes de depuración en la consola.
+
+### 21. ¿Por qué Android separa recursos del código?
+Mantenibilidad y desacoplamiento: Permite modificar la apariencia o los contenidos visuales sin alterar ni arriesgar la estabilidad de la lógica de negocio.
+
+### 22. ¿Qué ventaja tiene esto para traducir una aplicación?
+Tener los textos centralizados fuera del código fuente simplifica el soporte multiidioma:
+
+Selección nativa por idioma: Al crear variantes como res/values-en/strings.xml o res/values-fr/strings.xml, Android detecta la configuración regional del dispositivo del usuario y carga las cadenas correspondientes sin intervención de código extra.
+
+Mecanismo de respaldo (fallback): Si una palabra no está traducida en el idioma del usuario, el sistema toma automáticamente la versión del archivo base (res/values/strings.xml), evitando fallos en la interfaz.
+
+### 23. ¿Por qué Preview es útil aunque ya exista un emulador?
+
+Ciclo de retroalimentación inmediato: Renderiza componentes en cuestión de segundos dentro del IDE, ahorrando el tiempo de empaquetar el APK, desplegarlo e inicializar el entorno virtual.
+
+Pruebas simultáneas de estados: Permite renderizar una misma función visual en paralelo bajo múltiples escenarios (modo claro y oscuro, fuentes ampliadas, o pantallas de distintas dimensiones) lado a lado.
+
+Aislamiento visual: Posibilita diseñar y ajustar pantallas profundas o componentes específicos sin necesidad de abrir la aplicación en el emulador, iniciar sesión y navegar paso a paso hasta esa vista.
+
+Menor consumo de recursos: Consume una fracción de la memoria RAM y procesamiento de CPU en comparación con una máquina virtual de Android (AVD) en ejecución continua.
+
+

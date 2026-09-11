@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Ejercicios</string>
+    <string name="titulo_tareas">Tareas de estudio</string>
+    <string name="agregar">Agregar Tarea</string>
+    <string name="borrar_todas">Borrar todas las tareas</string>
+    <string name="cantidad_tareas">Cantidad de tareas: </string>
 </resources>

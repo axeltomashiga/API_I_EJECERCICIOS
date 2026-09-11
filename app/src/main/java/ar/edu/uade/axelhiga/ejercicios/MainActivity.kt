@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.axelhiga.ejercicios.data.models.Tarea
@@ -88,6 +89,7 @@ fun ToDoList(modifier: Modifier = Modifier) {
     var tareaString by remember { mutableStateOf("") }
 
     Column (modifier = modifier.fillMaxWidth().padding(start = 20.dp)) {
+        Text(stringResource(id = R.string.titulo_tareas))
         TextField(value = tareaString,
             onValueChange = { tareaString = it },
             modifier = Modifier.fillMaxWidth().padding(end = 20.dp)
@@ -97,11 +99,11 @@ fun ToDoList(modifier: Modifier = Modifier) {
             Button( onClick = {agregarTarea(tareas, tareaString)
                 tareaString = ""
             }) {
-                Text("Agregar tarea")
+                Text(stringResource(id = R.string.agregar))
             }
             Button( onClick = {tareas.clear()
             }) {
-                Text("Borrar todas")
+                Text(stringResource(id = R.string.borrar_todas))
             }
         }
         LazyColumn() {
@@ -109,7 +111,7 @@ fun ToDoList(modifier: Modifier = Modifier) {
                 tarea -> TareaItem(tarea, tareas)
             }
         }
-        Text("Cantidad de tareas: ${tareas.size}")
+        Text(stringResource(id = R.string.cantidad_tareas) + tareas.size.toString())
     }
 }
 
