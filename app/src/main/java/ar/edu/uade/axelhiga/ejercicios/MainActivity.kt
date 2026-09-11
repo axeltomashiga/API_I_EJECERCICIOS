@@ -5,12 +5,16 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -25,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import ar.edu.uade.axelhiga.ejercicios.data.models.Materia
 import ar.edu.uade.axelhiga.ejercicios.ui.theme.EjerciciosTheme
 
 class MainActivity : ComponentActivity() {
@@ -34,82 +39,105 @@ class MainActivity : ComponentActivity() {
         setContent {
             EjerciciosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Calculadora(Modifier.padding(innerPadding))
+                    MateriasList(Modifier.padding(innerPadding))
                 }
             }
         }
     }
 }
 
-fun calcular(a:Double, b:Double, operacion:String) : String {
-    return when (operacion) {
-        "+" -> (a + b).toString()
-        "-" -> (a - b).toString()
-        "*" -> (a * b).toString()
-        "/" -> (a / b).toString()
-        else -> "Operación no válida"
+
+@Composable
+fun MateriaItem (materia: Materia, modifier: Modifier = Modifier) {
+    Row (modifier = modifier)
+    {
+        Text(text = materia.nombre)
+        Spacer(Modifier.width(15.dp))
+        Text(text = materia.anio.toString())
+        Spacer(Modifier.width(15.dp))
+        Text(text = if (materia.aprobada) "Aprobada" else "Reprobada")
     }
 }
 
 @Composable
-fun ButtonOperation(operation: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.padding(8.dp)
-    ) {
-        Text(operation)
-    }
-}
+fun MateriasList (modifier: Modifier = Modifier) {
+    val materias : List<Materia> = listOf(
+        Materia("Programacion", 1, true),
+        Materia("Matematica", 1, false),
+        Materia("Fisica", 1, true),
+        Materia("Quimica", 1, false),
+        Materia("Historia", 1, true),
+        Materia("Lengua", 1, false),
+        Materia("Ingles", 1, true),
+        )
 
-@Composable
-fun Calculadora(modifier: Modifier = Modifier) {
-    Log.d("Calculadora", "Calculadora iniciando")
-    var numero1 by remember { mutableStateOf("") }
-    var numero2 by remember { mutableStateOf("") }
-    var operacion by remember { mutableStateOf("") }
-    var resultado by remember { mutableStateOf("") }
-    Log.d("Calculadora", "Calculadora iniciada")
-    Column(modifier = modifier) {
-        TextField(
-            value = numero1,
-            onValueChange = { numero1 = it },
-            label = { Text("Número 1") },
-            modifier = Modifier.padding(8.dp)
-        )
-        TextField(
-            value = numero2,
-            onValueChange = { numero2 = it },
-            label = { Text("Número 2") },
-            modifier = Modifier.padding(8.dp)
-        )
-        Row(modifier = Modifier.padding(8.dp)) {
-            ButtonOperation("+", onClick = { operacion = "+" })
-            ButtonOperation("-", onClick = { operacion = "-" })
-            ButtonOperation("*", onClick = { operacion = "*" })
-            ButtonOperation("/", onClick = { operacion = "/" })
+    var filtro by remember { mutableStateOf("Todas") }
+
+    val materiasFiltro = when (filtro) {
+        "Aprobadas" -> materias.filter { it.aprobada }
+        "Reprobadas" -> materias.filter { !it.aprobada }
+        else -> materias
+    }
+
+
+    Column(modifier) {
+        Row() {
+            Text("Nombre")
+            Spacer(Modifier.width(15.dp))
+            Text("Año")
+            Spacer(Modifier.width(15.dp))
+            Text("Estado")
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = {
-                resultado = calcular(numero1.toDouble(), numero2.toDouble(), operacion)
-            },
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Text("Resultado")
+        Spacer(Modifier.height(15.dp))
+        LazyColumn() {
+            items(materiasFiltro) { materia ->
+                MateriaItem(materia)
+            }
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Resultado: $resultado",
-            modifier = Modifier.padding(8.dp)
-        )
+
+        Spacer(Modifier.height(15.dp))
+
+        Text("Cantidad de Materias: ${ materiasFiltro.size }")
+
+        Spacer(Modifier.height(15.dp))
+
+        Row () {
+
+            Button(
+                onClick = {
+                    filtro = "Aprobadas"
+                }
+            ) {
+                Text("Filtrar Aprobadas")
+            }
+
+            Button(
+                onClick = {
+                    filtro = "Reprobadas"
+                }
+            ) {
+                Text("Filtrar Reprobadas")
+            }
+
+            Button(
+                onClick = {
+                    filtro = "Todas"
+                }
+            ) {
+                Text("Mostrar todas")
+            }
+
+        }
+
+
     }
 }
 
 
 @Preview(showBackground = true)
 @Composable
-fun CalculadoraPreview () {
+fun MateriasListPreview () {
     EjerciciosTheme() {
-        Calculadora()
+        MateriasList()
     }
 }
