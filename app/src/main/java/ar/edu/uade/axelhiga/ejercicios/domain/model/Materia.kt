@@ -1,4 +1,4 @@
-package ar.edu.uade.axelhiga.ejercicios.data.models
+package ar.edu.uade.axelhiga.ejercicios.domain.model
 
 data class Materia (
     val nombre: String,
