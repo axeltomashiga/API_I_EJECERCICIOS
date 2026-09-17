@@ -9,11 +9,29 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class OrganizadorCursadaViewModel: ViewModel() {
 
-    private val _actividadesList = MutableStateFlow<MutableList<Actividad>>(mutableStateListOf())
+    private val _actividadesList =
+        MutableStateFlow<List<Actividad>>(emptyList())
 
-    val actividadesList = _actividadesList.asStateFlow()
+    val actividadesList =
+        _actividadesList.asStateFlow()
 
     fun agregarActividad(actividad: Actividad) {
-        _actividadesList.value.add(actividad)
+        _actividadesList.value += actividad
     }
+
+    fun completarActividad(actividad: Actividad) {
+        _actividadesList.value =
+            _actividadesList.value.map {
+                if (it == actividad) {
+                    it.copy(completada = !it.completada)
+                } else {
+                    it
+                }
+            }
+    }
+    fun eliminarActividad(actividad: Actividad) {
+        _actividadesList.value =
+            _actividadesList.value.filter { it != actividad }
+    }
+
 }

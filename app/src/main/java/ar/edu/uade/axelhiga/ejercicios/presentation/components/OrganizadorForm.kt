@@ -13,7 +13,7 @@ import androidx.compose.runtime.setValue
 import ar.edu.uade.axelhiga.ejercicios.domain.model.Actividad
 
 @Composable
-fun FormularioOrganizador (
+fun OrganizadorForm (
     onAgregarActividad: (Actividad) -> Unit
 ) {
     var titulo by remember { mutableStateOf("") }
