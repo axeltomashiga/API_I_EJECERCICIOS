@@ -33,6 +33,7 @@ fun CompartirRecomendacionPreview () {
 }
 
 /*
+
 El proyecto tiene una base muy sólida y bien encaminada para MVVM con Jetpack Compose, aunque presenta algunos detalles técnicos y arquitectónicos importantes a tener en cuenta.
 
   A continuación tienes un análisis detallado:
