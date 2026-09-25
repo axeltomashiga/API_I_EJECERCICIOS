@@ -146,4 +146,13 @@ Es la herramienta del sistema que proporciona acceso a la información global de
 Uri	Android SDK	
 Es una clase que utiliza Android para identificar recursos específicos, como la ruta de una imagen en la galería o una dirección web.
 
+### 25. Uso del remember
+¿El dato sobrevive solamente mientras vive el proceso?
+Si
+
+¿Una recomposición equivale a cerrar la aplicación?
+No es equivalente a cerrar la aplicación. Ya que al cerrar la aplicación se borran los datos no guardados y para hacerlo hay persistir.
+
+¿Una data class guarda automáticamente algo en disco?
+No. Una data class por sí sola no guarda datos automáticamente en disco. La instancia existe en memoria (RAM) por lo que si se apaga se pierde.
 
