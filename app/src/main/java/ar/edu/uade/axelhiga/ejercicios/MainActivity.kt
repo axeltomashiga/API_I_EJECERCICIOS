@@ -9,12 +9,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,7 +37,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             EjerciciosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    CompartirRecomendacion(Modifier.padding(innerPadding))
+                    ExperimentoPersistencia(Modifier.padding(innerPadding))
                 }
             }
         }
@@ -37,37 +45,23 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CompartirRecomendacion(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    Column(modifier) {
-        Button(onClick = {
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, "¡Estoy aprendiendo Android con Compose!")
-            }
-            // Esta línea es la que realmente abre el menú del sistema
-            //context.startActivity(intent)
-            val shareIntent = Intent.createChooser(intent, "Compartir vía...")
-            context.startActivity(shareIntent)
-        }) {
-            Text("Compartir mi progreso")
-        }
-        Spacer(Modifier.height(25.dp))
-        Button(onClick = {
-            val intentView = Intent(Intent.ACTION_VIEW).apply {
-                data = "https://www.google.com".toUri()
-            }
-            context.startActivity(intentView)
-        }) {
-            Text("Ir a Google")
-        }
-    }
-}
+fun ExperimentoPersistencia(modifier: Modifier = Modifier) {
+    var nombre by remember { mutableStateOf("") }
+    var contador by remember { mutableIntStateOf(0) }
 
-@Preview(showBackground = true)
-@Composable
-fun CompartirRecomendacionPreview () {
-    EjerciciosTheme() {
-        CompartirRecomendacion()
+    Column(modifier=modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        TextField(value = nombre, onValueChange = { nombre = it })
+
+        Text("Hola, $nombre")
+
+        Text("Contador: $contador")
+
+        Button(onClick = {contador++}) {
+            Text("+1")
+        }
+
+        Button(onClick = {contador=0}) {
+            Text("Reiniciar")
+        }
     }
 }
