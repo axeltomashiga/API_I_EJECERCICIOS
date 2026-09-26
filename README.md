@@ -156,3 +156,15 @@ No es equivalente a cerrar la aplicación. Ya que al cerrar la aplicación se bo
 ¿Una data class guarda automáticamente algo en disco?
 No. Una data class por sí sola no guarda datos automáticamente en disco. La instancia existe en memoria (RAM) por lo que si se apaga se pierde.
 
+### 26. Recrear con Remember saveable
+¿Qué cambia al recrearse la pantalla?
+Al recrearse la pantalla con rotacion con unicamente remember se pierde el contenido.
+
+¿Qué diferencia práctica aparece entre remember y rememberSaveable?
+Con remember saveable si se recrea la pantalla el valor no se pierde.
+
+¿Serviría esto como almacenamiento general de una colección grande?
+No, no sire como almacenamiento global porque si se cierra la aplicacion el valor se pierde.
+
+
+
