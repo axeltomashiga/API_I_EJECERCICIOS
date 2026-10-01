@@ -157,14 +157,32 @@ No es equivalente a cerrar la aplicación. Ya que al cerrar la aplicación se bo
 No. Una data class por sí sola no guarda datos automáticamente en disco. La instancia existe en memoria (RAM) por lo que si se apaga se pierde.
 
 ### 26. Recrear con Remember saveable
-¿Qué cambia al recrearse la pantalla?
+¿Qué cambia al recrearse la pantalla? 
+
 Al recrearse la pantalla con rotacion con unicamente remember se pierde el contenido.
 
 ¿Qué diferencia práctica aparece entre remember y rememberSaveable?
+
 Con remember saveable si se recrea la pantalla el valor no se pierde.
 
 ¿Serviría esto como almacenamiento general de una colección grande?
+
 No, no sire como almacenamiento global porque si se cierra la aplicacion el valor se pierde.
+
+### 27. File
+¿Qué representa context.filesDir?
+
+context.filesDir representa la carpeta interna de almacenamiento de la aplicación. Es un directorio privado de la app donde puede guardar archivos.
+
+¿Qué ocurre si el archivo todavía no existe?
+
+Si el archivo todavía no existe, File(...) no lo crea automáticamente. Solo representa la ruta del archivo.
+
+¿Qué diferencia hay entre el valor del TextField y el contenido de nota.txt?
+
+Diferencia entre el TextField y nota.txt:
+- El valor del TextField está en memoria y representa lo que el usuario está escribiendo en la interfaz.
+- El contenido de nota.txt está guardado en el almacenamiento interno de la app y puede sobrevivir al cierre de la aplicación.
 
 
 

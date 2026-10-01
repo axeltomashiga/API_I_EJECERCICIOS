@@ -50,15 +50,22 @@ class MainActivity : ComponentActivity() {
 fun NotaPersistente(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val archivo = File(context.filesDir, "nota.txt")
-    var texto by remember { mutableStateOf("") }
-    var nota by rememberSaveable { mutableStateOf(archivo.readText()) }
+
+    if (!archivo.exists()) {
+        archivo.createNewFile() // Esto crea el archivo vacío en el almacenamiento físico
+    }
+
+    var texto by rememberSaveable { mutableStateOf("") }
+    var nota by rememberSaveable { mutableStateOf("") }
+
+    nota = archivo.readText()
 
     Column(modifier=modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         TextField(value = texto, onValueChange = { texto = it })
 
-        Text(archivo.readText())
+        Text("nota: $nota")
 
-        Button(onClick = {archivo.writeText(texto)}) {
+        Button(onClick = {archivo.writeText (texto) }) {
             Text("Guardar")
         }
     }
