@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.axelhiga.ejercicios.ui.theme.EjerciciosTheme
 import androidx.core.net.toUri
+import java.io.File
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             EjerciciosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ExperimentoPersistencia(Modifier.padding(innerPadding))
+                    NotaPersistente(Modifier.padding(innerPadding))
                 }
             }
         }
@@ -46,23 +47,19 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ExperimentoPersistencia(modifier: Modifier = Modifier) {
-    var nombre by rememberSaveable { mutableStateOf("") }
-    var contador by rememberSaveable { mutableIntStateOf(0) }
+fun NotaPersistente(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val archivo = File(context.filesDir, "nota.txt")
+    var texto by remember { mutableStateOf("") }
+    var nota by rememberSaveable { mutableStateOf(archivo.readText()) }
 
     Column(modifier=modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        TextField(value = nombre, onValueChange = { nombre = it })
+        TextField(value = texto, onValueChange = { texto = it })
 
-        Text("Hola, $nombre")
+        Text(archivo.readText())
 
-        Text("Contador: $contador")
-
-        Button(onClick = {contador++}) {
-            Text("+1")
-        }
-
-        Button(onClick = {contador=0}) {
-            Text("Reiniciar")
+        Button(onClick = {archivo.writeText(texto)}) {
+            Text("Guardar")
         }
     }
 }
