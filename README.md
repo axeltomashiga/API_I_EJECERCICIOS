@@ -184,5 +184,18 @@ Diferencia entre el TextField y nota.txt:
 - El valor del TextField está en memoria y representa lo que el usuario está escribiendo en la interfaz.
 - El contenido de nota.txt está guardado en el almacenamiento interno de la app y puede sobrevivir al cierre de la aplicación.
 
+### 28. ¿Dónde puede existir el mismo dato?
 
+El mismo dato puede existir en dos lugares diferentes:
+- En el estado de Compose, por ejemplo, el valor que tiene el TextField.
+- En el archivo nota.txt, guardado en context.filesDir.
 
+### 29. ¿Editar la pantalla implica escribir el archivo?
+
+No.
+Editar el TextField solamente modifica el estado de Compose.
+El archivo nota.txt se modifica únicamente cuando ejecutamos explícitamente una operación de escritura
+
+### 30. ¿Qué evento dispara una escritura?
+
+La escritura se dispara cuando el usuario presiona el botón Guardar, que ejecuta el código que escribe el contenido del TextField en nota.txt.

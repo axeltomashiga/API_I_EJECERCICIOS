@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             EjerciciosTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NotaPersistente(Modifier.padding(innerPadding))
+                    ApunteRapido(Modifier.padding(innerPadding))
                 }
             }
         }
@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NotaPersistente(modifier: Modifier = Modifier) {
+fun ApunteRapido(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val archivo = File(context.filesDir, "nota.txt")
 
@@ -58,15 +58,39 @@ fun NotaPersistente(modifier: Modifier = Modifier) {
     var texto by rememberSaveable { mutableStateOf("") }
     var nota by rememberSaveable { mutableStateOf("") }
 
-    nota = archivo.readText()
-
     Column(modifier=modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("Titulo: Apunte Rapido")
+
         TextField(value = texto, onValueChange = { texto = it })
 
         Text("nota: $nota")
 
-        Button(onClick = {archivo.writeText (texto) }) {
+        Button(onClick = {archivo.writeText (texto)
+            nota = archivo.readText()
+        }) {
             Text("Guardar")
+        }
+        Button(onClick = {texto = ""
+            nota = ""
+        }) {
+            Text("Limpiar Pantalla")
+        }
+
+        Button(onClick = {if (archivo.exists()) {
+            nota = archivo.readText()
+        } else {
+            nota = ""
+        }
+        }) {
+            Text("Recuperar")
+        }
+
+        Button(onClick = {if (archivo.exists()) {
+            archivo.delete()
+            nota = ""
+        }
+        }) {
+            Text("Eliminar Guardado")
         }
     }
 }
