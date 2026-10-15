@@ -39,8 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ar.edu.uade.axelhiga.ejercicios.domain.model.Materia
+import ar.edu.uade.axelhiga.ejercicios.domain.repository.MateriaArchivoRepository
 import ar.edu.uade.axelhiga.ejercicios.ui.theme.EjerciciosTheme
-import java.io.File
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,36 +54,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-fun materiaATexto(materia: Materia): String {
-    // Se cambió "Reprobada" por "No aprobada"
-    return "${materia.nombre}|${materia.anio ?: ""}|${if (materia.aprobada) "Aprobada" else "No aprobada"}"
-}
-
-fun textoAMateria(linea: String): Materia? {
-    val partes = linea.split("|")
-    if (partes.size == 3) {
-        val nombre = partes[0].trim()
-        val anio = partes[1].trim().toIntOrNull()
-        val aprobada = partes[2].trim() == "Aprobada"
-        if (nombre.isNotEmpty()) {
-            return Materia(nombre, anio, aprobada)
-        }
-    }
-    return null
-}
-
-fun guardarMaterias(archivo: File, lista: List<Materia?>) {
-    // Filtramos los elementos null (en caso de que los haya) antes de guardar
-    val contenido = lista.filterNotNull().joinToString("\n") { materiaATexto(it) }
-    archivo.writeText(contenido)
-}
-
-fun cargarMaterias(archivo: File): List<Materia?> {
-    if (!archivo.exists()) return emptyList()
-    // Utilizamos "map" simple en vez de "mapNotNull" para respetar el operador y admitir nulls en la lista
-    return archivo.readLines().map { textoAMateria(it) }
 }
 
 @Composable
@@ -109,17 +79,15 @@ fun MateriaItem(materia: Materia, onDelete: () -> Unit, modifier: Modifier = Mod
                 )
             }
             Text(
-                // Se cambió "Reprobada" por "No aprobada"
                 text = if (materia.aprobada) "Aprobada" else "No aprobada",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(end = 16.dp)
             )
-            // Icono de papelera para eliminar
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Eliminar materia",
-                    tint = MaterialTheme.colorScheme.error // Le da un color rojo
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         }
@@ -129,20 +97,19 @@ fun MateriaItem(materia: Materia, onDelete: () -> Unit, modifier: Modifier = Mod
 @Composable
 fun ApunteRapido(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val archivo = remember { File(context.filesDir, "materias.txt") }
+    
+    // Instanciamos el repositorio. Notar cómo ahora ya no conocemos "materias.txt" ni "filesDir"
+    val repository = remember { MateriaArchivoRepository(context) }
 
     var nombreInput by rememberSaveable { mutableStateOf("") }
     var anioInput by rememberSaveable { mutableStateOf("") }
     var aprobadaInput by rememberSaveable { mutableStateOf(false) }
 
-    // Permitimos que la lista mantenga elementos nulos Materia?
     var listaMaterias by remember { mutableStateOf(emptyList<Materia?>()) }
 
     LaunchedEffect(Unit) {
-        if (!archivo.exists()) {
-            archivo.createNewFile()
-        }
-        listaMaterias = cargarMaterias(archivo)
+        // Le pedimos al repositorio que cargue las materias
+        listaMaterias = repository.cargar()
     }
 
     Column(
@@ -190,9 +157,7 @@ fun ApunteRapido(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Column (
-
-        ) {
+        Column {
             Button(onClick = {
                 if (nombreInput.isNotBlank()) {
                     val nuevaMateria = Materia(
@@ -201,7 +166,9 @@ fun ApunteRapido(modifier: Modifier = Modifier) {
                         aprobada = aprobadaInput
                     )
                     val nuevaLista = listaMaterias + nuevaMateria
-                    guardarMaterias(archivo, nuevaLista)
+                    
+                    // Delegamos el guardado al repositorio
+                    repository.guardar(nuevaLista)
                     listaMaterias = nuevaLista
 
                     // Limpiar formulario
@@ -214,30 +181,29 @@ fun ApunteRapido(modifier: Modifier = Modifier) {
             }
 
             Button(onClick = {
-                if (archivo.exists()) {
-                    archivo.delete()
-                }
+                // Delegamos el borrado al repositorio
+                repository.borrarTodo()
                 listaMaterias = emptyList()
             }) {
                 Text("Eliminar Todo")
             }
 
             Button(onClick = {
-                listaMaterias=emptyList()
+                listaMaterias = emptyList()
             }) {
                 Text("Limpiar pantalla")
             }
 
             Button(onClick = {
-                listaMaterias= cargarMaterias(archivo)
+                // Volvemos a pedirle al repositorio que cargue
+                listaMaterias = repository.cargar()
             }) {
-                Text("recuperar")
+                Text("Recuperar")
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Contamos solo las materias válidas (que no son null)
         val materiasValidasCount = listaMaterias.count { it != null }
 
         Text(
@@ -253,14 +219,14 @@ fun ApunteRapido(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(listaMaterias) { materiaNullable ->
-                // Usamos el operador let seguro '?'
-                // Si la materia es null, el bloque de código de la Card simplemente no se ejecuta
                 materiaNullable?.let { materia ->
                     MateriaItem(
                         materia = materia,
                         onDelete = {
                             val nuevaLista = listaMaterias.toMutableList().apply { remove(materiaNullable) }
-                            guardarMaterias(archivo, nuevaLista)
+                            
+                            // Guardamos mediante el repositorio
+                            repository.guardar(nuevaLista)
                             listaMaterias = nuevaLista
                         }
                     )
