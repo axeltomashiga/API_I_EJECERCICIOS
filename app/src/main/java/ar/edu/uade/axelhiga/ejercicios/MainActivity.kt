@@ -15,9 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,7 +57,8 @@ class MainActivity : ComponentActivity() {
 }
 
 fun materiaATexto(materia: Materia): String {
-    return "${materia.nombre}|${materia.anio ?: ""}|${if (materia.aprobada) "Aprobada" else "Reprobada"}"
+    // Se cambió "Reprobada" por "No aprobada"
+    return "${materia.nombre}|${materia.anio ?: ""}|${if (materia.aprobada) "Aprobada" else "No aprobada"}"
 }
 
 fun textoAMateria(linea: String): Materia? {
@@ -80,7 +85,7 @@ fun cargarMaterias(archivo: File): List<Materia> {
 }
 
 @Composable
-fun MateriaItem(materia: Materia, modifier: Modifier = Modifier) {
+fun MateriaItem(materia: Materia, onDelete: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -91,7 +96,7 @@ fun MateriaItem(materia: Materia, modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = materia.nombre,
                     style = MaterialTheme.typography.titleMedium
@@ -102,9 +107,19 @@ fun MateriaItem(materia: Materia, modifier: Modifier = Modifier) {
                 )
             }
             Text(
-                text = if (materia.aprobada) "Aprobada" else "Reprobada",
-                style = MaterialTheme.typography.bodyMedium
+                // Se cambió "Reprobada" por "No aprobada"
+                text = if (materia.aprobada) "Aprobada" else "No aprobada",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(end = 16.dp)
             )
+            // Icono de papelera para eliminar
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar materia",
+                    tint = MaterialTheme.colorScheme.error // Le da un color rojo
+                )
+            }
         }
     }
 }
@@ -232,7 +247,17 @@ fun ApunteRapido(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(listaMaterias) { materia ->
-                MateriaItem(materia = materia)
+                MateriaItem(
+                    materia = materia,
+                    onDelete = {
+                        // Removemos específicamente la materia seleccionada de la lista
+                        val nuevaLista = listaMaterias.toMutableList().apply { remove(materia) }
+                        // Guardamos la nueva lista en el archivo persistente
+                        guardarMaterias(archivo, nuevaLista)
+                        // Actualizamos el estado de la UI
+                        listaMaterias = nuevaLista
+                    }
+                )
             }
         }
     }
