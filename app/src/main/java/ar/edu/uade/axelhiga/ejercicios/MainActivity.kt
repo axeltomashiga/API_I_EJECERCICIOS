@@ -74,14 +74,16 @@ fun textoAMateria(linea: String): Materia? {
     return null
 }
 
-fun guardarMaterias(archivo: File, lista: List<Materia>) {
-    val contenido = lista.joinToString("\n") { materiaATexto(it) }
+fun guardarMaterias(archivo: File, lista: List<Materia?>) {
+    // Filtramos los elementos null (en caso de que los haya) antes de guardar
+    val contenido = lista.filterNotNull().joinToString("\n") { materiaATexto(it) }
     archivo.writeText(contenido)
 }
 
-fun cargarMaterias(archivo: File): List<Materia> {
+fun cargarMaterias(archivo: File): List<Materia?> {
     if (!archivo.exists()) return emptyList()
-    return archivo.readLines().mapNotNull { textoAMateria(it) }
+    // Utilizamos "map" simple en vez de "mapNotNull" para respetar el operador y admitir nulls en la lista
+    return archivo.readLines().map { textoAMateria(it) }
 }
 
 @Composable
@@ -133,7 +135,8 @@ fun ApunteRapido(modifier: Modifier = Modifier) {
     var anioInput by rememberSaveable { mutableStateOf("") }
     var aprobadaInput by rememberSaveable { mutableStateOf(false) }
 
-    var listaMaterias by remember { mutableStateOf(emptyList<Materia>()) }
+    // Permitimos que la lista mantenga elementos nulos Materia?
+    var listaMaterias by remember { mutableStateOf(emptyList<Materia?>()) }
 
     LaunchedEffect(Unit) {
         if (!archivo.exists()) {
@@ -234,8 +237,11 @@ fun ApunteRapido(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Contamos solo las materias válidas (que no son null)
+        val materiasValidasCount = listaMaterias.count { it != null }
+
         Text(
-            text = "Materias guardadas (${listaMaterias.size}):",
+            text = "Materias guardadas ($materiasValidasCount):",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.align(Alignment.Start)
         )
@@ -246,18 +252,19 @@ fun ApunteRapido(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(listaMaterias) { materia ->
-                MateriaItem(
-                    materia = materia,
-                    onDelete = {
-                        // Removemos específicamente la materia seleccionada de la lista
-                        val nuevaLista = listaMaterias.toMutableList().apply { remove(materia) }
-                        // Guardamos la nueva lista en el archivo persistente
-                        guardarMaterias(archivo, nuevaLista)
-                        // Actualizamos el estado de la UI
-                        listaMaterias = nuevaLista
-                    }
-                )
+            items(listaMaterias) { materiaNullable ->
+                // Usamos el operador let seguro '?'
+                // Si la materia es null, el bloque de código de la Card simplemente no se ejecuta
+                materiaNullable?.let { materia ->
+                    MateriaItem(
+                        materia = materia,
+                        onDelete = {
+                            val nuevaLista = listaMaterias.toMutableList().apply { remove(materiaNullable) }
+                            guardarMaterias(archivo, nuevaLista)
+                            listaMaterias = nuevaLista
+                        }
+                    )
+                }
             }
         }
     }
