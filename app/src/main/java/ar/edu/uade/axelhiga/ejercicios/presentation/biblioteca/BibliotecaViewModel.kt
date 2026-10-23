@@ -40,10 +40,14 @@ class BibliotecaViewModel(
         _soloNoTerminados.value = !_soloNoTerminados.value
     }
 
-    fun agregarLibro(titulo: String, autor: String) {
+    fun agregarLibro(titulo: String, autor: String, paginas: Int) {
         if (titulo.isBlank() || autor.isBlank()) return
         viewModelScope.launch {
-            repository.agregarLibro(titulo.trim(), autor.trim())
+            repository.agregarLibro(
+                titulo = titulo.trim(),
+                autor = autor.trim(),
+                paginas = if (paginas < 0) 0 else paginas
+            )
         }
     }
 

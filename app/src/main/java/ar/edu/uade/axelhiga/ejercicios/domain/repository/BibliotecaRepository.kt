@@ -12,7 +12,13 @@ interface BibliotecaRepository {
     val librosNoTerminados: Flow<List<Libro>>
     val todosLosLibros: Flow<List<Libro>>
 
-    suspend fun agregarLibro(titulo: String, autor: String, estanteriaId: Long? = null): Long
+    suspend fun agregarLibro(
+        titulo: String,
+        autor: String,
+        paginas: Int = 0,
+        estanteriaId: Long? = null
+    ): Long
+
     suspend fun cambiarEstado(libroId: Long, nuevoEstado: EstadoLectura)
     suspend fun crearEstanteria(nombre: String): Long
     suspend fun eliminarEstanteria(estanteriaId: Long)

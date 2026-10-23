@@ -30,11 +30,13 @@ class BibliotecaRepositoryImpl(
     override suspend fun agregarLibro(
         titulo: String,
         autor: String,
+        paginas: Int,
         estanteriaId: Long?
     ): Long {
         val entity = LibroEntity(
             titulo = titulo,
             autor = autor,
+            paginas = paginas,
             estanteriaId = estanteriaId,
             estado = EstadoLectura.PENDIENTE,
             fechaActualizacion = System.currentTimeMillis()

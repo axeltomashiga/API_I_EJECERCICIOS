@@ -56,11 +56,12 @@ class BibliotecaDatabaseTest {
         // 1. Insertamos una estantería
         val estanteriaId = dao.insertarEstanteria(EstanteriaEntity(nombre = "Favoritos"))
 
-        // 2. Insertamos un libro asociado a esa estantería
+        // 2. Insertamos un libro asociado a esa estantería con el nuevo campo paginas (Versión 2)
         val libroId = dao.insertarLibro(
             LibroEntity(
                 titulo = "El Principito",
                 autor = "Antoine de Saint-Exupéry",
+                paginas = 96,
                 estanteriaId = estanteriaId,
                 estado = EstadoLectura.LEYENDO
             )
@@ -69,9 +70,10 @@ class BibliotecaDatabaseTest {
         // 3. Eliminamos la estantería
         dao.eliminarEstanteria(estanteriaId)
 
-        // 4. Verificamos que el libro sigue existiendo pero su estanteriaId ahora es null
+        // 4. Verificamos que el libro sigue existiendo, que conserva sus páginas y que su estanteriaId ahora es null
         val libroRecuperado = dao.obtenerLibroPorId(libroId)
         assertNotNull("El libro no debe ser eliminado", libroRecuperado)
+        assertEquals(96, libroRecuperado?.paginas)
         assertNull("La clave foránea debe ser seteada a null por la política SET_NULL", libroRecuperado?.estanteriaId)
     }
 
@@ -88,6 +90,7 @@ class BibliotecaDatabaseTest {
             LibroEntity(
                 titulo = "Libro Leído",
                 autor = "Autor A",
+                paginas = 320,
                 estado = EstadoLectura.TERMINADO,
                 fechaActualizacion = 1000L
             )
@@ -98,6 +101,7 @@ class BibliotecaDatabaseTest {
             LibroEntity(
                 titulo = "Libro Pendiente",
                 autor = "Autor B",
+                paginas = 180,
                 estado = EstadoLectura.PENDIENTE,
                 fechaActualizacion = 2000L
             )
@@ -108,6 +112,7 @@ class BibliotecaDatabaseTest {
             LibroEntity(
                 titulo = "Libro Leyendo Actualmente",
                 autor = "Autor C",
+                paginas = 250,
                 estado = EstadoLectura.LEYENDO,
                 fechaActualizacion = 3000L
             )

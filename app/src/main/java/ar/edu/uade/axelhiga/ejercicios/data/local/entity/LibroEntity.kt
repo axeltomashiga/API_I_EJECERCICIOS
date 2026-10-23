@@ -1,5 +1,6 @@
 package ar.edu.uade.axelhiga.ejercicios.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -27,6 +28,8 @@ data class LibroEntity(
     val id: Long = 0,
     val titulo: String,
     val autor: String,
+    @ColumnInfo(name = "paginas", defaultValue = "0")
+    val paginas: Int = 0, // Nueva columna obligatoria incorporada en la versión 2
     val estanteriaId: Long? = null,
     val estado: EstadoLectura = EstadoLectura.PENDIENTE,
     val fechaActualizacion: Long = System.currentTimeMillis()
@@ -35,6 +38,7 @@ data class LibroEntity(
         id = id,
         titulo = titulo,
         autor = autor,
+        paginas = paginas,
         estanteriaId = estanteriaId,
         estado = estado,
         fechaActualizacion = fechaActualizacion
@@ -45,6 +49,7 @@ data class LibroEntity(
             id = libro.id,
             titulo = libro.titulo,
             autor = libro.autor,
+            paginas = libro.paginas,
             estanteriaId = libro.estanteriaId,
             estado = libro.estado,
             fechaActualizacion = libro.fechaActualizacion

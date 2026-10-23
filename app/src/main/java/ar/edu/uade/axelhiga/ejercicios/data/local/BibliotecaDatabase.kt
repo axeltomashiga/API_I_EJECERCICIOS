@@ -13,7 +13,7 @@ import ar.edu.uade.axelhiga.ejercicios.data.local.entity.LibroEntity
 
 @Database(
     entities = [EstanteriaEntity::class, LibroEntity::class],
-    version = 1,
+    version = 2, // Subimos a versión 2 (Punto 4 de la consigna)
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -27,7 +27,8 @@ abstract class BibliotecaDatabase : RoomDatabase() {
 
         /**
          * Migración hacia versión 2 (Punto 4 de la consigna):
-         * Agrega una nueva columna obligatoria (NOT NULL) con DEFAULT 0 sin perder datos.
+         * Agrega la nueva columna obligatoria 'paginas' (NOT NULL) con DEFAULT 0
+         * para garantizar que los datos existentes no se pierdan ni se corrompan.
          */
         val MIGRACION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -41,7 +42,9 @@ abstract class BibliotecaDatabase : RoomDatabase() {
                     context.applicationContext,
                     BibliotecaDatabase::class.java,
                     "biblioteca.db"
-                ).build()
+                )
+                    .addMigrations(MIGRACION_1_2) // Se registra la migración
+                    .build()
                 INSTANCE = instance
                 instance
             }

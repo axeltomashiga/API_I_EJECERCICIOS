@@ -5,12 +5,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.edu.uade.axelhiga.ejercicios.domain.model.EstadoLectura
@@ -33,6 +35,7 @@ fun BibliotecaScreen(
 
     var tituloInput by remember { mutableStateOf("") }
     var autorInput by remember { mutableStateOf("") }
+    var paginasInput by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -53,7 +56,7 @@ fun BibliotecaScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Alta de libro (Punto 3)
+            // Alta de libro (Punto 3 + Punto 4 Campo Páginas)
             Card(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -81,11 +84,23 @@ fun BibliotecaScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    OutlinedTextField(
+                        value = paginasInput,
+                        onValueChange = { input ->
+                            if (input.all { it.isDigit() }) paginasInput = input
+                        },
+                        label = { Text("Cantidad de páginas (Versión 2)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                     Button(
                         onClick = {
-                            viewModel.agregarLibro(tituloInput, autorInput)
+                            val paginas = paginasInput.toIntOrNull() ?: 0
+                            viewModel.agregarLibro(tituloInput, autorInput, paginas)
                             tituloInput = ""
                             autorInput = ""
+                            paginasInput = ""
                         },
                         modifier = Modifier.align(Alignment.End)
                     ) {
@@ -180,7 +195,7 @@ fun LibroItem(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Autor: ${libro.autor}",
+                    text = "Autor: ${libro.autor} • ${libro.paginas} págs.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
