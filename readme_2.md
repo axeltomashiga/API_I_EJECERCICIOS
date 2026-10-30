@@ -181,3 +181,19 @@ Porque evita crear múltiples conexiones a la misma base de datos, mejora el uso
 Además, evita problemas de rendimiento y es una buena práctica de arquitectura utilizar un patrón Singleton para administrar la base de datos.
 
 
+## ¿Qué dato de la UI no debería terminar en la tabla?
+Los datos temporales de la interfaz, como si un botón está habilitado, si un campo tiene el foco o si un mensaje de confirmación está visible. Estos datos pertenecen a la UI y no necesitan persistirse en la base de datos.
+
+## ¿Dónde se genera creadaEn y por qué?
+Se genera al momento de crear la NotaEntity, utilizando por ejemplo System.currentTimeMillis().
+Se hace en ese momento porque representa la fecha y hora en la que se creó la nota. Así queda almacenada y no cambia cada vez que se muestra o consulta.
+
+## ¿Qué señal usarías para saber que una inserción terminó correctamente?
+Utilizaría el resultado de la operación de inserción. Si Room devuelve un ID válido, significa que la nota se insertó correctamente.
+También podría utilizar un StateFlow o un SharedFlow desde el ViewModel para comunicar el resultado a la UI y mostrar un mensaje de éxito o error.
+
+## ¿Qué riesgo hay en lanzar una corrutina nueva en cualquier lugar sólo para "hacer que funcione"?
+Se pueden generar múltiples corrutinas sin control, lo que puede provocar problemas de concurrencia, consumo innecesario de recursos y dificultades para manejar errores.
+Además, si no se utiliza un ámbito adecuado, las corrutinas pueden seguir ejecutándose aunque la pantalla ya no exista.
+Por eso conviene utilizar un CoroutineScope asociado al ciclo de vida correspondiente, como viewModelScope dentro de un ViewModel.
+
