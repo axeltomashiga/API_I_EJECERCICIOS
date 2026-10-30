@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ar.edu.uade.axelhiga.ejercicios.data.local.entity.NotaEntity
+import ar.edu.uade.axelhiga.ejercicios.data.local.entity.Prioridad
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +30,7 @@ fun AgregarNotaScreen(
     val notas by viewModel.notas.collectAsState()
     val titulo by viewModel.titulo.collectAsState()
     val contenido by viewModel.contenido.collectAsState()
-    val importante by viewModel.importante.collectAsState()
+    val prioridad by viewModel.prioridad.collectAsState()
     val codigoExterno by viewModel.codigoExterno.collectAsState()
     val categoriaId by viewModel.categoriaId.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
@@ -173,15 +174,21 @@ fun AgregarNotaScreen(
                 }
             }
 
-            // Opción para marcar como importante
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = importante,
-                    onCheckedChange = { viewModel.onImportanteChange(it) }
-                )
-                Text("Marcar como Importante")
+            // Opción para Prioridad usando un SingleChoiceSegmentedButtonRow
+            // Esto es más moderno que un Dropdown para opciones cortas (Baja, Media, Alta)
+            val opcionesPrioridad = Prioridad.entries
+            
+            Text("Prioridad", style = MaterialTheme.typography.labelLarge)
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                opcionesPrioridad.forEachIndexed { index, opcion ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = opcionesPrioridad.size),
+                        onClick = { viewModel.onPrioridadChange(opcion) },
+                        selected = opcion == prioridad
+                    ) {
+                        Text(opcion.name)
+                    }
+                }
             }
 
             // Botón Guardar
@@ -223,7 +230,7 @@ fun AgregarNotaScreen(
                 FilterChip(
                     selected = soloImportantesFilter,
                     onClick = { viewModel.toggleImportantesFilter() },
-                    label = { Text("Solo Importantes") }
+                    label = { Text("Solo Prioridad Alta") }
                 )
                 
                 FilterChip(
@@ -264,7 +271,7 @@ fun AgregarNotaScreen(
                             .fillMaxWidth()
                             .clickable { viewModel.cargarNotaParaEdicion(nota) },
                         colors = CardDefaults.cardColors(
-                            containerColor = if (nota.importante) MaterialTheme.colorScheme.tertiaryContainer 
+                            containerColor = if (nota.prioridad == Prioridad.ALTA) MaterialTheme.colorScheme.errorContainer 
                                              else MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
@@ -285,6 +292,12 @@ fun AgregarNotaScreen(
                                 Text(
                                     text = nota.contenido,
                                     style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Prioridad: ${nota.prioridad.name}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.secondary
                                 )
                             }
                             

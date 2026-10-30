@@ -29,7 +29,7 @@ data class NotaEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val titulo: String,
     val contenido: String,
-    val importante: Boolean = false,
+    val prioridad: Prioridad = Prioridad.BAJA,
     val codigoExterno: String? = null,
     val categoriaId: Int? = null, // Puede existir una nota sin categoría
     val creadaEn: Long = System.currentTimeMillis(),

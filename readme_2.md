@@ -175,7 +175,7 @@ Room interpreta las anotaciones como @Dao, @Insert y @Query, además de los tipo
 SQLite interpreta y ejecuta las consultas SQL, como SELECT, DELETE e INSERT, sobre la base de datos.
 
 ## ¿Por qué insertar() puede devolver un Long?
-Porque Room devuelve el ID de la fila que se acaba de insertar. Ese identificador permite saber qué nota se guardó y encontrarla posteriormente en la base de datos. 
+Porque Room devuelve el ID de la fila que se acaba de insertar. Ese identificador permite saber qué nota se guardó y encontrarla posteriormente en la base de datos.
 
 ## ¿Qué pasa conceptualmente si una consulta por ID no encuentra nada? ¿Qué tipo de retorno sería razonable?
 Si no encuentra ninguna nota con ese ID, la consulta no devuelve ningún resultado. Un tipo de retorno razonable sería NotaEntity?, porque permite devolver una nota o null si no existe.
@@ -330,3 +330,26 @@ Para que esto sea posible en Kotlin, declaramos la propiedad con un tipo de dato
 Si tuvieras 5 notas asociadas a la categoría "Estudios" (id=1), todas tendrían `categoriaId = 1` en la base de datos.
 Al ejecutar un `@Delete` sobre la categoría "Estudios", en vez de producirse un error o borrarse las notas, Room irá a la tabla `notas`, buscará esas 5 notas, y cambiará su `categoriaId` a `null`. Las notas sobrevivirán como notas huérfanas (sin categoría).
 
+---
+
+## TypeConverters y Tipos Expresivos
+
+En este ejercicio reemplazamos el campo primitivo `importante: Boolean` por un tipo más expresivo: un enum `Prioridad { BAJA, MEDIA, ALTA }`. Como SQLite no entiende qué es un Enum de Kotlin, tuvimos que usar `@TypeConverter` para traducirlo a `String` al momento de guardarlo.
+
+### 1. ¿Room guarda el enum completo?
+No. Room no puede guardar el objeto Enum de Kotlin en la base de datos. Lo que hace es delegar en nuestro `@TypeConverter`, el cual toma el nombre del enum (`valor.name`) y guarda un simple **texto plano (String)** en SQLite, como `"ALTA"`, `"MEDIA"`, etc.
+
+### 2. ¿Qué pasa si en una versión futura se renombra ALTA a URGENTE?
+Si solo cambiamos el nombre en el código Kotlin (de `ALTA` a `URGENTE`) pero dejamos las funciones del convertidor tal como están, **la aplicación va a crashear (IllegalArgumentException)** al intentar leer notas viejas de la base de datos.
+Esto ocurre porque la base de datos sigue guardando el String `"ALTA"`, y cuando el `@TypeConverter` intenta hacer `Prioridad.valueOf("ALTA")`, Kotlin arrojará un error porque ese valor ya no existe en el Enum.
+*Por eso, en nuestro código del TypeConverter agregamos un bloque `try-catch` que devuelve un valor por defecto (Fallback) si falla la conversión, previniendo este error catastrófico.*
+
+### 3. ¿Qué ventaja tiene guardar una fecha como número y qué ventaja tiene guardarla como texto?
+- **Como número (Long - Unix Timestamp):** Es extremadamente eficiente para la base de datos. Ocupa menos espacio, y lo más importante: **es fácil de ordenar y comparar matemáticamente**. Consultas como `ORDER BY fecha DESC` o buscar notas entre dos fechas (`WHERE fecha BETWEEN x AND y`) son instántaneas para SQLite.
+- **Como texto (String - ISO 8601):** La principal ventaja es la **legibilidad humana**. Si abrimos el archivo SQLite (o el Database Inspector), es mucho más fácil para nosotros leer `"2024-05-10T12:00:00Z"` que intentar descifrar el número `"1715342400000"`. También facilita la depuración si la base de datos se exporta a otros sistemas que solo leen texto.
+
+### 4. ¿Qué parte del problema resuelve el TypeConverter y qué parte no?
+- **Qué resuelve:** El TypeConverter actúa como un "traductor automático" bidireccional entre la base de datos (SQLite) y tu código de la aplicación (Kotlin). Te permite usar clases complejas (Enums, Fechas de Java 8 como `LocalDate`, Listas, Objetos anidados) en tu código, sin tener que preocuparte de convertirlos a primitivos (Long, String) cada vez que haces un Insert o un Select.
+- **Qué NO resuelve:** No resuelve el problema del **filtrado o búsqueda nativa en SQLite** usando las propiedades internas de esos objetos complejos. Por ejemplo, si tienes un TypeConverter que guarda una lista de etiquetas en formato JSON como `["casa", "trabajo"]`, SQLite no entiende ese JSON, solo ve un texto. No puedes pedirle a SQLite de forma nativa que filtre eficientemente "dame las notas que tengan la etiqueta 'casa' dentro de ese JSON". Para eso se requiere diseño de tablas relacionales.
+
+---

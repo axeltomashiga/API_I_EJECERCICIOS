@@ -26,7 +26,7 @@ interface NotaDao {
     @Query("""
         SELECT * FROM notas 
         WHERE titulo LIKE '%' || :query || '%' 
-        AND (:soloImportantes = 0 OR importante = 1)
+        AND (:soloImportantes = 0 OR prioridad = 'ALTA')
         ORDER BY creadaEn DESC
     """)
     fun observarNotasDesc(query: String, soloImportantes: Boolean): Flow<List<NotaEntity>>
@@ -35,7 +35,7 @@ interface NotaDao {
     @Query("""
         SELECT * FROM notas 
         WHERE titulo LIKE '%' || :query || '%' 
-        AND (:soloImportantes = 0 OR importante = 1)
+        AND (:soloImportantes = 0 OR prioridad = 'ALTA')
         ORDER BY creadaEn ASC
     """)
     fun observarNotasAsc(query: String, soloImportantes: Boolean): Flow<List<NotaEntity>>
@@ -45,7 +45,7 @@ interface NotaDao {
     fun contarNotas(): Flow<Int>
 
     // 5. Cantidad de notas importantes
-    @Query("SELECT COUNT(*) FROM notas WHERE importante = 1")
+    @Query("SELECT COUNT(*) FROM notas WHERE prioridad = 'ALTA'")
     fun contarNotasImportantes(): Flow<Int>
 
     @Query("SELECT * FROM notas ORDER BY CreadaEn DESC")
@@ -57,6 +57,6 @@ interface NotaDao {
     @Query("SELECT * FROM notas WHERE id = :id")
     suspend fun obtenerPorId(id: Int) : NotaEntity
 
-    @Query("SELECT * FROM notas WHERE importante = 1")
+    @Query("SELECT * FROM notas WHERE prioridad = 'ALTA'")
     suspend fun obtenerImportantes() : List<NotaEntity>
 }

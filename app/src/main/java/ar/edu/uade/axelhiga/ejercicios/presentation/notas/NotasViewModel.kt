@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ar.edu.uade.axelhiga.ejercicios.data.local.entity.CategoriaEntity
 import ar.edu.uade.axelhiga.ejercicios.data.local.entity.NotaEntity
+import ar.edu.uade.axelhiga.ejercicios.data.local.entity.Prioridad
 import ar.edu.uade.axelhiga.ejercicios.data.repository.CategoriaRepository
 import ar.edu.uade.axelhiga.ejercicios.data.repository.NotaRepository
 import kotlinx.coroutines.Dispatchers
@@ -74,8 +75,8 @@ class NotasViewModel(
     private val _contenido = MutableStateFlow("")
     val contenido = _contenido.asStateFlow()
 
-    private val _importante = MutableStateFlow(false)
-    val importante = _importante.asStateFlow()
+    private val _prioridad = MutableStateFlow(Prioridad.BAJA)
+    val prioridad = _prioridad.asStateFlow()
 
     private val _categoriaId = MutableStateFlow<Int?>(null)
     val categoriaId = _categoriaId.asStateFlow()
@@ -100,7 +101,7 @@ class NotasViewModel(
     // Funciones para actualizar los estados desde la vista
     fun onTituloChange(nuevoTitulo: String) { _titulo.value = nuevoTitulo }
     fun onContenidoChange(nuevoContenido: String) { _contenido.value = nuevoContenido }
-    fun onImportanteChange(esImportante: Boolean) { _importante.value = esImportante }
+    fun onPrioridadChange(nuevaPrioridad: Prioridad) { _prioridad.value = nuevaPrioridad }
     fun onCodigoExternoChange(nuevoCodigo: String) { _codigoExterno.value = nuevoCodigo }
     fun onCategoriaChange(id: Int?) { _categoriaId.value = id }
     
@@ -109,7 +110,7 @@ class NotasViewModel(
         _notaIdEnEdicion.value = nota.id
         _titulo.value = nota.titulo
         _contenido.value = nota.contenido
-        _importante.value = nota.importante
+        _prioridad.value = nota.prioridad
         _codigoExterno.value = nota.codigoExterno ?: ""
         _categoriaId.value = nota.categoriaId
         _mensaje.value = ""
@@ -126,7 +127,7 @@ class NotasViewModel(
         _titulo.value = ""
         _contenido.value = ""
         _codigoExterno.value = ""
-        _importante.value = false
+        _prioridad.value = Prioridad.BAJA
         _categoriaId.value = null
     }
 
@@ -153,7 +154,7 @@ class NotasViewModel(
                     id = idActual ?: 0,
                     titulo = tituloLimpio,
                     contenido = contenidoLimpio,
-                    importante = _importante.value,
+                    prioridad = _prioridad.value,
                     codigoExterno = codigoLimpio,
                     categoriaId = _categoriaId.value
                 )
