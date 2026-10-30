@@ -369,3 +369,22 @@ Conviene forzar un fallo controlado **justo en el punto medio entre las operacio
 Al inyectar una excepción en ese punto intermedio se puede comprobar e instrumentar mediante pruebas:
 1. Que **sin transacción**, los datos sufren una modificación parcial e inconsistente.
 2. Que **con `@Transaction`**, Room captura el fallo, ejecuta el `ROLLBACK` y revierte la base de datos a su estado original.
+
+---
+#### 1. ¿Por qué cambiar una Entity puede requerir una migración aunque el código compile?
+El compilador de Kotlin/Java únicamente verifica la validez del código fuente del proyecto (sintaxis, clases y tipos). Sin embargo, la base de datos SQLite vive en un archivo físico en el almacenamiento del celular con una **estructura de tablas fija (esquema SQL)**.
+Al agregar una propiedad a una `@Entity` (por ejemplo `val archivada: Boolean`), el código compila perfectamente, pero cuando Room arranca y compara el esquema guardado en disco contra las entidades en memoria, detecta una falta de coincidencia (falta la columna en SQLite). Si no existe una migración que aplique un `ALTER TABLE`, Room detendrá la ejecución arrojando una `IllegalStateException`.
+
+#### 2. ¿Qué sucede si se sube la versión pero no se registra un camino de migración?
+Si se incrementa el atributo `version` en `@Database` (por ejemplo de 1 a 2) sin proporcionar la correspondiente migración con `.addMigrations(...)`:
+- **Comportamiento estándar de Room:** La aplicación se **cierra con un crash** en tiempo de ejecución (`IllegalStateException: A migration from 1 to 2 was required but not found`).
+- **Si se tiene configurado `fallbackToDestructiveMigration()`:** Room **elimina y recrea todas las tablas** (`DROP TABLE`), causando la **pérdida permanente e irrecuperable de la información** previamente guardada por el usuario.
+
+#### 3. ¿Qué datos deberían tener las filas antiguas en la nueva columna?
+Las filas antiguas deben recibir un **valor por defecto coherente con las reglas del negocio** definido en la sentencia SQL mediante `DEFAULT`.
+Para el campo `archivada: Boolean` (que en SQLite se almacena como `INTEGER 0` para `false` y `1` para `true`), la instrucción `ALTER TABLE notas ADD COLUMN archivada INTEGER NOT NULL DEFAULT 0` asigna automáticamente el valor `0` (`false`) a todos los registros antiguos.
+
+#### 4. ¿Por qué una migración es parte del diseño de datos y no sólo un detalle de Gradle o Android Studio?
+Porque una migración determina **cómo se preserva y transforma la información histórica del usuario** a medida que la aplicación evoluciona.
+No se trata de una simple preferencia del entorno de compilación, sino de una decisión fundamental de arquitectura que garantiza la supervivencia de los datos de producción, define valores por defecto coherentes e impide que cambios en las entidades corrompan o borren la información almacenada.
+
