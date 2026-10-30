@@ -103,6 +103,23 @@ Preparándonos para la migración a bases de datos, aquí se define qué represe
 
 - **Repository (Repositorio)**: Es un patrón de arquitectura recomendado por Google. Es una clase normal que actúa como un intermediario entre el ViewModel (la lógica de la pantalla) y las fuentes de datos (el DAO de Room, un archivo de texto, o una API en internet). Su trabajo es decidir de dónde sacar los datos para que al ViewModel no le importe el origen.
 
+---
+
+## Desafío Final: Interfaz de Repositorio
+
+El último desafío pedía dividir nuestra clase repositorio concreta en una `interface NotaRepository` y una implementación concreta `NotaRepositoryImpl`.
+
+### ¿Aporta algo en este tamaño de proyecto o solo agrega una capa más?
+
+**En este tamaño de proyecto (Pequeño):**
+Técnicamente, **agrega una capa más (sobreingeniería)**. Al ser una aplicación simple donde la única fuente de datos es la base local Room, el ViewModel podría conectarse tranquilamente a la clase concreta `NotaRepository` sin ningún problema de dependencias. 
+
+**En el mundo real (Mediano/Grande):**
+Dividirlo en una Interfaz SÍ aporta un inmenso valor (y es casi obligatorio) por dos motivos:
+
+1. **Testabilidad (Unit Tests)**: Para testear un `ViewModel`, no queremos (ni podemos) levantar una base de datos real de SQLite. Al requerir una *interfaz*, podemos inyectarle un "Falso Repositorio" (Fake o Mock) que devuelva listas falsas instantáneas, aislando el testeo solo a la lógica del ViewModel.
+2. **Principio de Inversión de Dependencias (SOLID)**: Nuestro `ViewModel` ya no está acoplado al "cómo" se guardan las notas. Solo interactúa con un contrato (interface). Si mañana decidimos que la app tiene que sincronizarse con Firebase en la nube, simplemente programamos una nueva clase `NotaRepositoryFirebaseImpl : NotaRepository`, y en nuestro inyector de dependencias cambiamos qué versión se le entrega al ViewModel. ¡No habría que tocar ni una sola línea de código en el `ViewModel` ni en Jetpack Compose!
+
 ### ¿remember implica persistencia?
 No. remember permite conservar un estado durante las recomposiciones de Jetpack Compose, pero no guarda los datos permanentemente. Si se cierra la aplicación o se destruye el proceso, los datos se pierden. 
 
