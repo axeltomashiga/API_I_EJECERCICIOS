@@ -248,3 +248,20 @@ La búsqueda por título podría beneficiarse de un índice sobre la columna tit
 También podría ser útil un índice sobre creadaEn para mejorar el rendimiento de las consultas que ordenan las notas por fecha.
 Los índices aceleran las búsquedas y ordenamientos, aunque ocupan espacio adicional y pueden hacer que las inserciones y actualizaciones sean un poco más lentas.
 
+## ¿Qué gana el proyecto con esta separación y qué costo agrega?
+Gana organización, mantenibilidad y separación de responsabilidades. Cada capa tiene una función específica: la UI muestra los datos, el ViewModel maneja el estado, el Repository administra el acceso a los datos y el DAO realiza las consultas a Room.
+Como costo, agrega más clases y código, lo que puede parecer innecesario en aplicaciones pequeñas.
+
+## ¿El Repository tiene que existir siempre? Justificar para este caso.
+No necesariamente. En aplicaciones muy simples, el ViewModel podría comunicarse directamente con el DAO.
+Pero en este caso conviene utilizar un Repository porque centraliza las operaciones de datos, evita que el ViewModel conozca los detalles de Room y permite cambiar o agregar otras fuentes de datos en el futuro.
+
+## ¿Qué clase debería decidir si un título vacío es válido?
+La validación debería realizarse en el ViewModel o en una capa de dominio, ya que es una regla del problema y no una responsabilidad de la interfaz ni de la base de datos.
+La UI puede mostrar un mensaje de error, pero la decisión de si el título es válido debería estar fuera de ella.
+
+## Si mañana los datos vinieran de red y de Room, ¿qué parte de esta estructura sería el mejor lugar para coordinarlos?
+El Repository, porque es el encargado de administrar y coordinar las distintas fuentes de datos.
+Podría consultar la información de Room y de una API, decidir de dónde obtener los datos y mantenerlos sincronizados sin que el ViewModel o la UI necesiten conocer esos detalles.
+
+
