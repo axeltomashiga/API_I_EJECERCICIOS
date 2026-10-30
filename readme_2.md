@@ -197,3 +197,23 @@ Se pueden generar múltiples corrutinas sin control, lo que puede provocar probl
 Además, si no se utiliza un ámbito adecuado, las corrutinas pueden seguir ejecutándose aunque la pantalla ya no exista.
 Por eso conviene utilizar un CoroutineScope asociado al ciclo de vida correspondiente, como viewModelScope dentro de un ViewModel.
 
+## ¿En qué se diferencia Flow<List<NotaEntity>> de List<NotaEntity>?
+- List<NotaEntity>: representa una lista de notas en un momento determinado. Si se agregan o eliminan notas, la lista no se actualiza automáticamente.
+- Flow<List<NotaEntity>>: representa un flujo de datos que puede emitir nuevas listas cuando hay cambios en la base de datos.
+Por eso, Flow permite que la pantalla se actualice automáticamente sin tener que consultar nuevamente los datos manualmente.
+
+## ¿Room vuelve a ejecutar la consulta cuando detecta cambios en la tabla relevante?
+Sí. Room observa los cambios en las tablas involucradas en la consulta y, cuando detecta una modificación, vuelve a ejecutarla y emite una nueva lista a través del Flow.
+
+## ¿Es lo mismo un Flow que un estado de Compose?
+No. Tienen responsabilidades diferentes:
+- Flow: es un flujo de datos que permite emitir valores a lo largo del tiempo.
+- Estado de Compose: es un valor observable por la interfaz que provoca una recomposición cuando cambia.
+Generalmente, se utiliza un Flow para obtener los datos desde el DAO y se transforma en un estado de Compose para que la pantalla pueda reaccionar a los cambios.
+
+## ¿Qué responsabilidad tiene collectAsState o collectAsStateWithLifecycle en este recorrido?
+Su responsabilidad es recolectar los valores que emite el Flow y convertirlos en un estado observable por Compose.
+- collectAsState(): recolecta el flujo y convierte sus emisiones en un estado de Compose.
+- collectAsStateWithLifecycle(): hace lo mismo, pero respeta el ciclo de vida de la aplicación, evitando recolectar datos cuando la pantalla no está activa.
+Por eso, es recomendable utilizar collectAsStateWithLifecycle() en las pantallas para mejorar el uso de recursos.
+

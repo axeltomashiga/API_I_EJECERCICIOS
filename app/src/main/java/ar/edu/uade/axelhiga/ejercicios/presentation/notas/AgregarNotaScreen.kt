@@ -1,36 +1,36 @@
 package ar.edu.uade.axelhiga.ejercicios.presentation.notas
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ar.edu.uade.axelhiga.ejercicios.data.local.AppDatabase
+import androidx.lifecycle.viewmodel.compose.viewModel
 import ar.edu.uade.axelhiga.ejercicios.data.local.entity.NotaEntity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AgregarNotaScreen() {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    
-    // Estados de la UI
-    var titulo by remember { mutableStateOf("") }
-    var contenido by remember { mutableStateOf("") }
-    var importante by remember { mutableStateOf(false) }
-    
-    // Estados de control
-    var mensaje by remember { mutableStateOf("") }
-    var guardando by remember { mutableStateOf(false) } // Para evitar doble tap
+fun AgregarNotaScreen(
+    viewModel: NotasViewModel = viewModel(
+        factory = NotasViewModelFactory(LocalContext.current.applicationContext)
+    )
+) {
+    // Escuchando los estados desde el ViewModel
+    val notas by viewModel.notas.collectAsState()
+    val titulo by viewModel.titulo.collectAsState()
+    val contenido by viewModel.contenido.collectAsState()
+    val importante by viewModel.importante.collectAsState()
+    val mensaje by viewModel.mensaje.collectAsState()
+    val guardando by viewModel.guardando.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Nueva Nota (Room)") })
+            TopAppBar(title = { Text("Nueva Nota (MVVM)") })
         }
     ) { paddingValues ->
         Column(
@@ -43,7 +43,7 @@ fun AgregarNotaScreen() {
             // Campo de Título
             OutlinedTextField(
                 value = titulo,
-                onValueChange = { titulo = it },
+                onValueChange = { viewModel.onTituloChange(it) },
                 label = { Text("Título") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -52,7 +52,7 @@ fun AgregarNotaScreen() {
             // Campo de Contenido
             OutlinedTextField(
                 value = contenido,
-                onValueChange = { contenido = it },
+                onValueChange = { viewModel.onContenidoChange(it) },
                 label = { Text("Contenido") },
                 modifier = Modifier.fillMaxWidth().height(120.dp)
             )
@@ -63,62 +63,16 @@ fun AgregarNotaScreen() {
             ) {
                 Checkbox(
                     checked = importante,
-                    onCheckedChange = { importante = it }
+                    onCheckedChange = { viewModel.onImportanteChange(it) }
                 )
                 Text("Marcar como Importante")
             }
 
             // Botón Guardar
             Button(
-                onClick = {
-                    // 1. Recortar espacios al comienzo y al final (trim)
-                    val tituloLimpio = titulo.trim()
-                    val contenidoLimpio = contenido.trim()
-
-                    // 2. Validación de título vacío
-                    if (tituloLimpio.isEmpty()) {
-                        mensaje = "Error: El título no puede estar vacío"
-                        return@Button
-                    }
-
-                    // 3. No permitir dos toques rápidos (evitar duplicados)
-                    if (guardando) return@Button
-
-                    guardando = true
-                    mensaje = "Guardando..."
-
-                    // Lanzar corrutina para insertar fuera del hilo principal (Dispatchers.IO)
-                    coroutineScope.launch {
-                        try {
-                            val db = AppDatabase.getInstance(context)
-                            val dao = db.notaDao()
-
-                            val nuevaNota = NotaEntity(
-                                titulo = tituloLimpio,
-                                contenido = contenidoLimpio,
-                                importante = importante
-                            )
-
-                            // Hacemos el insert en IO
-                            withContext(Dispatchers.IO) {
-                                dao.insert(nuevaNota)
-                            }
-
-                            // Volvemos al hilo principal para actualizar UI (Mensaje y limpieza)
-                            mensaje = "¡Nota guardada con éxito!"
-                            titulo = ""
-                            contenido = ""
-                            importante = false
-                        } catch (e: Exception) {
-                            mensaje = "Error al guardar: ${e.message}"
-                        } finally {
-                            // Rehabilitar botón
-                            guardando = false
-                        }
-                    }
-                },
+                onClick = { viewModel.guardarNota() },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !guardando // Si está guardando, deshabilitamos el botón
+                enabled = !guardando
             ) {
                 Text(if (guardando) "Guardando..." else "Guardar Nota")
             }
@@ -130,6 +84,49 @@ fun AgregarNotaScreen() {
                     color = if (mensaje.startsWith("Error")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium
                 )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Título de la lista
+            Text(
+                text = "Tus Notas Guardadas",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            // LazyColumn que reacciona a los cambios en el flujo del ViewModel
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    items = notas,
+                    key = { nota -> nota.id } // Clave única para optimización
+                ) { nota ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (nota.importante) MaterialTheme.colorScheme.tertiaryContainer 
+                                             else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = nota.titulo,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = nota.contenido,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
             }
         }
     }
