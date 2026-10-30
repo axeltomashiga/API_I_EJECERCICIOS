@@ -151,3 +151,18 @@ producirse un conflicto con una base de datos que ya existe.
 Para evitar problemas, debemos realizar una migración de la base de
 datos o utilizar `@ColumnInfo(name = "nombre_anterior")` para mantener
 el nombre de la columna existente.
+
+
+## ¿Qué parte del método interpreta Room y qué parte interpreta SQLite?
+Room interpreta las anotaciones como @Dao, @Insert y @Query, además de los tipos de datos de Kotlin. A partir de eso, genera el código necesario para ejecutar las operaciones.
+SQLite interpreta y ejecuta las consultas SQL, como SELECT, DELETE e INSERT, sobre la base de datos.
+
+## ¿Por qué insertar() puede devolver un Long?
+Porque Room devuelve el ID de la fila que se acaba de insertar. Ese identificador permite saber qué nota se guardó y encontrarla posteriormente en la base de datos. 
+
+## ¿Qué pasa conceptualmente si una consulta por ID no encuentra nada? ¿Qué tipo de retorno sería razonable?
+Si no encuentra ninguna nota con ese ID, la consulta no devuelve ningún resultado. Un tipo de retorno razonable sería NotaEntity?, porque permite devolver una nota o null si no existe.
+
+## ¿Por qué estos métodos no deberían ejecutarse bloqueando el hilo principal?
+Porque las operaciones de base de datos pueden tardar y bloquear el hilo principal provocaría que la interfaz deje de responder, generando lentitud o incluso errores de tipo Application Not Responding (ANR).
+Por eso se utilizan funciones suspend y corrutinas para ejecutar estas operaciones sin bloquear el hilo principal.
