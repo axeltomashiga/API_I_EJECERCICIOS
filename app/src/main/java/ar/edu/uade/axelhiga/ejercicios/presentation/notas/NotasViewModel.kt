@@ -64,6 +64,9 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
     private val _importante = MutableStateFlow(false)
     val importante = _importante.asStateFlow()
 
+    private val _codigoExterno = MutableStateFlow("")
+    val codigoExterno = _codigoExterno.asStateFlow()
+
     private val _mensaje = MutableStateFlow("")
     val mensaje = _mensaje.asStateFlow()
 
@@ -82,6 +85,7 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
     fun onTituloChange(nuevoTitulo: String) { _titulo.value = nuevoTitulo }
     fun onContenidoChange(nuevoContenido: String) { _contenido.value = nuevoContenido }
     fun onImportanteChange(esImportante: Boolean) { _importante.value = esImportante }
+    fun onCodigoExternoChange(nuevoCodigo: String) { _codigoExterno.value = nuevoCodigo }
     
     // Cargar nota para edición
     fun cargarNotaParaEdicion(nota: NotaEntity) {
@@ -89,6 +93,7 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
         _titulo.value = nota.titulo
         _contenido.value = nota.contenido
         _importante.value = nota.importante
+        _codigoExterno.value = nota.codigoExterno ?: ""
         _mensaje.value = ""
     }
 
@@ -102,6 +107,7 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
         _notaIdEnEdicion.value = null
         _titulo.value = ""
         _contenido.value = ""
+        _codigoExterno.value = ""
         _importante.value = false
     }
 
@@ -109,6 +115,7 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
     fun guardarNota() {
         val tituloLimpio = _titulo.value.trim()
         val contenidoLimpio = _contenido.value.trim()
+        val codigoLimpio = _codigoExterno.value.trim().takeIf { it.isNotEmpty() }
 
         if (tituloLimpio.isEmpty()) {
             _mensaje.value = "Error: El título no puede estar vacío"
@@ -124,10 +131,11 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
             try {
                 val idActual = _notaIdEnEdicion.value
                 val nuevaNota = NotaEntity(
-                    id = idActual ?: 0, // Si es nulo es 0 (Room auto-genera). Si no, usamos el ID actual.
+                    id = idActual ?: 0,
                     titulo = tituloLimpio,
                     contenido = contenidoLimpio,
-                    importante = _importante.value
+                    importante = _importante.value,
+                    codigoExterno = codigoLimpio
                 )
 
                 if (idActual != null) {

@@ -282,3 +282,25 @@ El Repository, porque es el encargado de administrar y coordinar las distintas f
 Podría consultar la información de Room y de una API, decidir de dónde obtener los datos y mantenerlos sincronizados sin que el ViewModel o la UI necesiten conocer esos detalles.
 
 
+## ¿Un índice único es lo mismo que una clave primaria?
+No. Ambos garantizan que no haya valores repetidos, pero tienen diferencias:
+- Clave primaria (PrimaryKey): identifica de manera única cada fila de la tabla y no puede ser nula.
+- Índice único (unique = true): impide que se repitan los valores de una columna, pero no necesariamente identifica la fila como su clave principal.
+En este caso, id sigue siendo la clave primaria y codigoExterno tiene un índice único para evitar duplicados.
+
+## ¿Qué problema puede traer REPLACE si se usa por comodidad?
+Puede eliminar el registro existente que tiene el mismo valor de clave o índice único y reemplazarlo por uno nuevo.
+Esto puede provocar la pérdida de información del registro anterior y generar problemas con relaciones o datos asociados.
+Por eso no conviene utilizarlo sin analizar sus consecuencias.
+
+## ¿Los índices mejoran todo gratis?
+No. Los índices permiten acelerar las búsquedas, los filtros y algunos ordenamientos, pero tienen un costo:
+- Ocupan espacio adicional en la base de datos.
+- Hacen que las inserciones, actualizaciones y eliminaciones sean un poco más lentas, porque también hay que actualizar los índices.
+Por eso conviene crear índices solamente en las columnas que se utilizan frecuentemente para buscar o filtrar información.
+
+## ¿Cómo comprobarías que una restricción realmente se está cumpliendo?
+Intentaría insertar dos notas diferentes con el mismo codigoExterno.
+Si el índice único está funcionando correctamente, la segunda inserción debería fallar o ser ignorada, dependiendo de la estrategia de conflicto elegida.
+También comprobaría los registros desde Database Inspector para verificar que no existan dos filas con el mismo código externo.
+

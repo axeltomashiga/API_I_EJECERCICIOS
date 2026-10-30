@@ -28,6 +28,7 @@ fun AgregarNotaScreen(
     val titulo by viewModel.titulo.collectAsState()
     val contenido by viewModel.contenido.collectAsState()
     val importante by viewModel.importante.collectAsState()
+    val codigoExterno by viewModel.codigoExterno.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val guardando by viewModel.guardando.collectAsState()
     val notaIdEnEdicion by viewModel.notaIdEnEdicion.collectAsState()
@@ -102,7 +103,16 @@ fun AgregarNotaScreen(
                 value = contenido,
                 onValueChange = { viewModel.onContenidoChange(it) },
                 label = { Text("Contenido") },
-                modifier = Modifier.fillMaxWidth().height(120.dp)
+                modifier = Modifier.fillMaxWidth().height(100.dp)
+            )
+
+            // Campo de Código Externo
+            OutlinedTextField(
+                value = codigoExterno,
+                onValueChange = { viewModel.onCodigoExternoChange(it) },
+                label = { Text("Código Externo (Opcional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
             // Opción para marcar como importante

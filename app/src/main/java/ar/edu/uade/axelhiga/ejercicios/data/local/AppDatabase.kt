@@ -9,7 +9,7 @@ import ar.edu.uade.axelhiga.ejercicios.data.local.entity.NotaEntity
 
 @Database(
     entities = [NotaEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false // Recomendado en false si no configuras una ruta de exportación en Gradle
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,7 +27,11 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "notas_database"
-                ).build()
+                )
+                // Al agregar campos (codigoExterno), el esquema cambia.
+                // Usamos este fallback destructivo para pruebas locales sin escribir migraciones SQL.
+                .fallbackToDestructiveMigration(dropAllTables = true)
+                .build()
                 INSTANCE = instance
                 instance
             }

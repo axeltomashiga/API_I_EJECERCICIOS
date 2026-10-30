@@ -3,6 +3,7 @@ package ar.edu.uade.axelhiga.ejercicios.data.local.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import ar.edu.uade.axelhiga.ejercicios.data.local.entity.NotaEntity
@@ -10,7 +11,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotaDao {
-    @Insert
+    // Si intentamos insertar una nota y choca con el índice único de otra
+    // nota que ya existe, REPLACE borrará la vieja y guardará esta nueva.
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(nota: NotaEntity) : Long
 
     @Update
