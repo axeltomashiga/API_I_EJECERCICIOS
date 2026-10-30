@@ -9,18 +9,50 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
 
-    // 1. Exposición del flujo de Room convertido en StateFlow para la UI
-    val notas: StateFlow<List<NotaEntity>> = repository.observarNotas()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    // --- Filtros ---
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    private val _soloImportantesFilter = MutableStateFlow(false)
+    val soloImportantesFilter = _soloImportantesFilter.asStateFlow()
+
+    private val _ordenAscendente = MutableStateFlow(false)
+    val ordenAscendente = _ordenAscendente.asStateFlow()
+
+    fun onSearchQueryChange(query: String) { _searchQuery.value = query }
+    fun toggleImportantesFilter() { _soloImportantesFilter.value = !_soloImportantesFilter.value }
+    fun toggleOrden() { _ordenAscendente.value = !_ordenAscendente.value }
+
+    // 1. Exposición del flujo de Room convertido en StateFlow, reaccionando a los filtros
+    val notas: StateFlow<List<NotaEntity>> = combine(
+        _searchQuery,
+        _soloImportantesFilter,
+        _ordenAscendente
+    ) { query, importantes, asc ->
+        Triple(query, importantes, asc)
+    }.flatMapLatest { (query, importantes, asc) ->
+        repository.observarNotasFiltradas(query, importantes, asc)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    // Estadísticas
+    val totalNotas: StateFlow<Int> = repository.observarCantidadTotal().stateIn(
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 0
+    )
+    val totalImportantes: StateFlow<Int> = repository.observarCantidadImportantes().stateIn(
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 0
+    )
 
     // 2. Estados del formulario (Reemplazando a los 'remember' de Compose)
     private val _titulo = MutableStateFlow("")

@@ -23,7 +23,7 @@ fun AgregarNotaScreen(
         factory = NotasViewModelFactory(LocalContext.current.applicationContext)
     )
 ) {
-    // Escuchando los estados desde el ViewModel
+    // Estados del formulario y lista
     val notas by viewModel.notas.collectAsState()
     val titulo by viewModel.titulo.collectAsState()
     val contenido by viewModel.contenido.collectAsState()
@@ -32,6 +32,13 @@ fun AgregarNotaScreen(
     val guardando by viewModel.guardando.collectAsState()
     val notaIdEnEdicion by viewModel.notaIdEnEdicion.collectAsState()
     val ultimaNotaEliminada by viewModel.ultimaNotaEliminada.collectAsState()
+
+    // Estados de filtros y estadísticas
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val soloImportantesFilter by viewModel.soloImportantesFilter.collectAsState()
+    val ordenAscendente by viewModel.ordenAscendente.collectAsState()
+    val totalNotas by viewModel.totalNotas.collectAsState()
+    val totalImportantes by viewModel.totalImportantes.collectAsState()
     
     // Estado para el cuadro de diálogo de eliminación
     var notaAEliminar by remember { mutableStateOf<NotaEntity?>(null) }
@@ -129,14 +136,43 @@ fun AgregarNotaScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider()
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Título de la lista
-            Text(
-                text = "Tus Notas Guardadas",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+            
+            // --- SECCIÓN DE BÚSQUEDA Y FILTROS ---
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.onSearchQueryChange(it) },
+                label = { Text("Buscar por título...") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = MaterialTheme.shapes.large
             )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = soloImportantesFilter,
+                    onClick = { viewModel.toggleImportantesFilter() },
+                    label = { Text("Solo Importantes") }
+                )
+                
+                FilterChip(
+                    selected = ordenAscendente,
+                    onClick = { viewModel.toggleOrden() },
+                    label = { Text(if (ordenAscendente) "Más antiguas primero" else "Más recientes primero") }
+                )
+            }
+
+            // Estadísticas
+            Text(
+                text = "Total: $totalNotas | Importantes: $totalImportantes",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
 
             // LazyColumn que reacciona a los cambios en el flujo del ViewModel
             LazyColumn(

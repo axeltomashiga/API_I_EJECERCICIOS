@@ -6,12 +6,20 @@ import kotlinx.coroutines.flow.Flow
 
 class NotaRepository(private val notaDao: NotaDao) {
 
-    /**
-     * Devuelve un flujo continuo con todas las notas ordenadas por fecha de creación descendente.
-     */
-    fun observarNotas(): Flow<List<NotaEntity>> {
-        return notaDao.observarNotas()
+    fun observarNotasFiltradas(
+        query: String,
+        soloImportantes: Boolean,
+        ascendente: Boolean
+    ): Flow<List<NotaEntity>> {
+        return if (ascendente) {
+            notaDao.observarNotasAsc(query, soloImportantes)
+        } else {
+            notaDao.observarNotasDesc(query, soloImportantes)
+        }
     }
+
+    fun observarCantidadTotal(): Flow<Int> = notaDao.contarNotas()
+    fun observarCantidadImportantes(): Flow<Int> = notaDao.contarNotasImportantes()
 
     /**
      * Inserta una nueva nota en la base de datos.

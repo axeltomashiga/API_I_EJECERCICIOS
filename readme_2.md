@@ -230,3 +230,21 @@ También es una decisión de producto, porque hay que pensar en la experiencia d
 ## ¿Qué parte de esta pantalla podría sobrevivir en memoria sin persistirse?
 Los datos temporales de la interfaz, como el texto que se está escribiendo antes de guardar, si un diálogo de confirmación está abierto o qué nota está seleccionada para editar.
 Estos datos pueden mantenerse en memoria utilizando estados de Compose o el ViewModel, sin necesidad de guardarlos en Room.
+
+## ¿Qué ventaja tiene filtrar en SQL en vez de traer todo y usar filter?
+La principal ventaja es que el filtrado se realiza directamente en la base de datos, evitando traer todos los registros a la aplicación.
+Esto mejora el rendimiento, reduce el uso de memoria y permite trabajar de manera más eficiente cuando hay muchos datos.
+
+## ¿Cómo entra el parámetro :texto en la consulta?
+Room utiliza :texto como un parámetro que se reemplaza por el valor recibido en la función buscarPorTitulo(texto: String).
+Por ejemplo, si el usuario escribe "Android", Room utiliza ese texto en la consulta para buscar las notas cuyo título contenga esa palabra.
+
+## ¿Qué diferencia hay entre ordenar en SQL y ordenar la lista en memoria?
+- Ordenar en SQL: la base de datos devuelve los resultados directamente ordenados mediante ORDER BY. Es más eficiente porque no hace falta ordenar los datos nuevamente en Kotlin.
+- Ordenar en memoria: primero se traen los datos y después se ordenan utilizando funciones de Kotlin, como sortedBy o sortedByDescending. Esto consume más memoria y procesamiento de la aplicación. 
+
+## ¿Qué consulta podría beneficiarse de un índice si la tabla creciera mucho?
+La búsqueda por título podría beneficiarse de un índice sobre la columna titulo, ya que permitiría localizar registros más rápidamente.
+También podría ser útil un índice sobre creadaEn para mejorar el rendimiento de las consultas que ordenan las notas por fecha.
+Los índices aceleran las búsquedas y ordenamientos, aunque ocupan espacio adicional y pueden hacer que las inserciones y actualizaciones sean un poco más lentas.
+

@@ -19,9 +19,31 @@ interface NotaDao {
     @Delete
     suspend fun eliminar(nota: NotaEntity)
 
-    // Exponemos un flujo reactivo para escuchar los cambios en la BD en tiempo real
-    @Query("SELECT * FROM notas ORDER BY creadaEn DESC")
-    fun observarNotas() : Flow<List<NotaEntity>>
+    // 1, 2 y 3. Búsqueda y filtrado (Descendente)
+    @Query("""
+        SELECT * FROM notas 
+        WHERE titulo LIKE '%' || :query || '%' 
+        AND (:soloImportantes = 0 OR importante = 1)
+        ORDER BY creadaEn DESC
+    """)
+    fun observarNotasDesc(query: String, soloImportantes: Boolean): Flow<List<NotaEntity>>
+
+    // 1, 2 y 3. Búsqueda y filtrado (Ascendente)
+    @Query("""
+        SELECT * FROM notas 
+        WHERE titulo LIKE '%' || :query || '%' 
+        AND (:soloImportantes = 0 OR importante = 1)
+        ORDER BY creadaEn ASC
+    """)
+    fun observarNotasAsc(query: String, soloImportantes: Boolean): Flow<List<NotaEntity>>
+
+    // 4. Cantidad total de notas
+    @Query("SELECT COUNT(*) FROM notas")
+    fun contarNotas(): Flow<Int>
+
+    // 5. Cantidad de notas importantes
+    @Query("SELECT COUNT(*) FROM notas WHERE importante = 1")
+    fun contarNotasImportantes(): Flow<Int>
 
     @Query("SELECT * FROM notas ORDER BY CreadaEn DESC")
     suspend fun obtenerTodasDeUnaVez() : List<NotaEntity>
