@@ -353,3 +353,19 @@ Esto ocurre porque la base de datos sigue guardando el String `"ALTA"`, y cuando
 - **Qué NO resuelve:** No resuelve el problema del **filtrado o búsqueda nativa en SQLite** usando las propiedades internas de esos objetos complejos. Por ejemplo, si tienes un TypeConverter que guarda una lista de etiquetas en formato JSON como `["casa", "trabajo"]`, SQLite no entiende ese JSON, solo ve un texto. No puedes pedirle a SQLite de forma nativa que filtre eficientemente "dame las notas que tengan la etiqueta 'casa' dentro de ese JSON". Para eso se requiere diseño de tablas relacionales.
 
 ---
+#### 1. ¿Qué significa que una operación sea atómica?
+Significa que se ejecuta como una **unidad indivisible**: cumple estrictamente con el principio de "todo o nada" (All or Nothing).
+Si una operación atómica consta de varios pasos y alguno de ellos falla, la transacción deshace automáticamente todos los pasos previos mediante un `ROLLBACK`, dejando la base de datos exactamente en el mismo estado en el que estaba antes de iniciar.
+
+#### 2. ¿Una transacción sirve sólo para escrituras?
+**No.** Las transacciones también son fundamentales para **lecturas relacionales complejas** (como `@Relation` o consultas compuestas). Sirven para garantizar la propiedad de **Aislamiento (Isolation)** de las propiedades ACID. Aseguran que mientras se ejecutan múltiples consultas para construir un resultado relacional en memoria, ninguna otra escritura modifique la base de datos a mitad de camino, evitando lecturas inconsistentes o desincronizadas.
+
+#### 3. ¿Qué error lógico podría dejar la base en un estado válido para SQLite pero inválido para la app?
+Un error lógico que respeta **todas las restricciones técnicas de SQLite** (claves primarias únicas, tipos de datos correctos, claves foráneas válidas), pero que **viola una regla de negocio de la aplicación**.
+*Ejemplo:* Dejar una categoría vacía después de una operación de "mover y eliminar", o dejar un saldo contable en negativo, o un carrito de compras confirmado pero sin productos. Para SQLite la estructura relacional es totalmente válida, pero para la lógica de negocio de la aplicación la base quedó en un estado inválido o inconsistente.
+
+#### 4. ¿Qué parte conviene probar forzando un fallo controlado?
+Conviene forzar un fallo controlado **justo en el punto medio entre las operaciones individuales que componen la transacción** (después de ejecutar el primer paso y antes de ejecutar el último).
+Al inyectar una excepción en ese punto intermedio se puede comprobar e instrumentar mediante pruebas:
+1. Que **sin transacción**, los datos sufren una modificación parcial e inconsistente.
+2. Que **con `@Transaction`**, Room captura el fallo, ejecuta el `ROLLBACK` y revierte la base de datos a su estado original.
