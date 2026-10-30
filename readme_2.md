@@ -166,3 +166,18 @@ Si no encuentra ninguna nota con ese ID, la consulta no devuelve ningún resulta
 ## ¿Por qué estos métodos no deberían ejecutarse bloqueando el hilo principal?
 Porque las operaciones de base de datos pueden tardar y bloquear el hilo principal provocaría que la interfaz deje de responder, generando lentitud o incluso errores de tipo Application Not Responding (ANR).
 Por eso se utilizan funciones suspend y corrutinas para ejecutar estas operaciones sin bloquear el hilo principal.
+
+## ¿Qué representa version = 1?
+Representa la versión actual del esquema de la base de datos. Room utiliza este número para saber qué estructura tiene la base y detectar cuándo se necesitan migraciones si se realizan cambios en las tablas o columnas.
+
+## ¿Qué relación hay entre la clase AppDatabase, el archivo SQLite y el DAO?
+- AppDatabase: representa la base de datos y define qué entidades forman parte de ella y qué DAO se pueden utilizar.
+- Archivo SQLite: es donde se almacenan físicamente los datos de la aplicación.
+- DAO: permite realizar operaciones sobre la base de datos, como insertar, consultar y eliminar notas.
+En resumen, AppDatabase organiza el acceso a la base, SQLite almacena los datos y el DAO permite operar sobre ellos.
+
+## ¿Por qué conviene que exista una única instancia de Room dentro del proceso?
+Porque evita crear múltiples conexiones a la misma base de datos, mejora el uso de recursos y permite que los distintos componentes de la aplicación trabajen sobre la misma instancia.
+Además, evita problemas de rendimiento y es una buena práctica de arquitectura utilizar un patrón Singleton para administrar la base de datos.
+
+
