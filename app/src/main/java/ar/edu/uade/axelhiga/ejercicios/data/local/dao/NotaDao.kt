@@ -1,8 +1,10 @@
 package ar.edu.uade.axelhiga.ejercicios.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import ar.edu.uade.axelhiga.ejercicios.data.local.entity.NotaEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -10,6 +12,12 @@ import kotlinx.coroutines.flow.Flow
 interface NotaDao {
     @Insert
     suspend fun insert(nota: NotaEntity) : Long
+
+    @Update
+    suspend fun actualizar(nota: NotaEntity)
+
+    @Delete
+    suspend fun eliminar(nota: NotaEntity)
 
     // Exponemos un flujo reactivo para escuchar los cambios en la BD en tiempo real
     @Query("SELECT * FROM notas ORDER BY creadaEn DESC")

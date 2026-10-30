@@ -217,3 +217,16 @@ Su responsabilidad es recolectar los valores que emite el Flow y convertirlos en
 - collectAsStateWithLifecycle(): hace lo mismo, pero respeta el ciclo de vida de la aplicación, evitando recolectar datos cuando la pantalla no está activa.
 Por eso, es recomendable utilizar collectAsStateWithLifecycle() en las pantallas para mejorar el uso de recursos.
 
+## ¿Cómo sabe @Update qué fila debe modificar?
+Room utiliza la clave primaria (id) de la entidad para identificar qué fila debe actualizar. Busca el registro que tenga ese mismo ID y modifica sus valores.
+
+## ¿Qué sucede si se construye un objeto editado con otro ID?
+Room intentará actualizar la fila que tenga el nuevo ID. Si no existe una fila con ese identificador, no se modificará ningún registro. No se creará una fila nueva porque se está utilizando @Update y no @Insert.
+
+## ¿Conviene borrar apenas se toca un ícono o pedir confirmación? ¿Acá interesa la decisión de producto además del código?
+Depende de la decisión de diseño de la aplicación. Lo recomendable es pedir una confirmación antes de eliminar una nota para evitar borrados accidentales.
+También es una decisión de producto, porque hay que pensar en la experiencia del usuario y en qué tan fácil queremos que sea realizar esa acción.
+
+## ¿Qué parte de esta pantalla podría sobrevivir en memoria sin persistirse?
+Los datos temporales de la interfaz, como el texto que se está escribiendo antes de guardar, si un diálogo de confirmación está abierto o qué nota está seleccionada para editar.
+Estos datos pueden mantenerse en memoria utilizando estados de Compose o el ViewModel, sin necesidad de guardarlos en Room.

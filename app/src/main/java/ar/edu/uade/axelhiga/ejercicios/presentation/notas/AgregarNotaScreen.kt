@@ -1,8 +1,11 @@
 package ar.edu.uade.axelhiga.ejercicios.presentation.notas
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,10 +30,48 @@ fun AgregarNotaScreen(
     val importante by viewModel.importante.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val guardando by viewModel.guardando.collectAsState()
+    val notaIdEnEdicion by viewModel.notaIdEnEdicion.collectAsState()
+    val ultimaNotaEliminada by viewModel.ultimaNotaEliminada.collectAsState()
+    
+    // Estado para el cuadro de diálogo de eliminación
+    var notaAEliminar by remember { mutableStateOf<NotaEntity?>(null) }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Nueva Nota (MVVM)") })
+            TopAppBar(
+                title = { Text(if (notaIdEnEdicion != null) "Editar Nota" else "Nueva Nota (MVVM)") },
+                actions = {
+                    if (notaIdEnEdicion != null) {
+                        TextButton(onClick = { viewModel.cancelarEdicion() }) {
+                            Text("Cancelar", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
+        },
+        snackbarHost = {
+            // Un Snackbar sencillo que se muestra cuando hay una nota eliminada temporalmente
+            if (ultimaNotaEliminada != null) {
+                Snackbar(
+                    action = {
+                        TextButton(onClick = { viewModel.deshacerEliminacion() }) {
+                            Text("DESHACER", color = MaterialTheme.colorScheme.inversePrimary)
+                        }
+                    },
+                    modifier = Modifier.padding(16.dp),
+                    dismissAction = {
+                        IconButton(onClick = { viewModel.descartarDeshacer() }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Descartar", tint = MaterialTheme.colorScheme.inverseOnSurface)
+                        }
+                    }
+                ) {
+                    Text("Se eliminó '${ultimaNotaEliminada?.titulo}'")
+                }
+            }
         }
     ) { paddingValues ->
         Column(
@@ -74,7 +115,7 @@ fun AgregarNotaScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !guardando
             ) {
-                Text(if (guardando) "Guardando..." else "Guardar Nota")
+                Text(if (guardando) "Guardando..." else if (notaIdEnEdicion != null) "Actualizar Nota" else "Guardar Nota")
             }
 
             // Mensaje corto al terminar la operación
@@ -107,27 +148,72 @@ fun AgregarNotaScreen(
                     key = { nota -> nota.id } // Clave única para optimización
                 ) { nota ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.cargarNotaParaEdicion(nota) },
                         colors = CardDefaults.cardColors(
                             containerColor = if (nota.importante) MaterialTheme.colorScheme.tertiaryContainer 
                                              else MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = nota.titulo,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = nota.contenido,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = nota.titulo,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = nota.contenido,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            
+                            // Botón de eliminar
+                            IconButton(onClick = { notaAEliminar = nota }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Eliminar nota",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    // Cuadro de diálogo para confirmar la eliminación
+    notaAEliminar?.let { nota ->
+        AlertDialog(
+            onDismissRequest = { notaAEliminar = null },
+            title = { Text("Eliminar nota") },
+            text = { Text("¿Estás seguro de que deseas eliminar la nota '${nota.titulo}'?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.eliminarNota(nota)
+                        notaAEliminar = null
+                    }
+                ) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { notaAEliminar = null }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
