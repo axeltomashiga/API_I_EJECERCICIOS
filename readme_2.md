@@ -117,3 +117,37 @@ Los datos temporales de la interfaz, como si un menú está desplegado o si un d
 
 ### ¿Qué dato de los que probaste sería absurdo persistir?
 Sería absurdo persistir el estado de un menú desplegable, por ejemplo, si está abierto o cerrado, porque es un dato temporal de la interfaz que no tiene sentido conservar cuando el usuario cierra y vuelve a abrir la aplicación.
+
+## 1. ¿Por qué `id` puede empezar en 0 aunque las filas guardadas no queden todas con 0?
+
+Porque `id` tiene `@PrimaryKey(autoGenerate = true)`, lo que significa
+que Room genera automáticamente un identificador único para cada nota.
+El valor `0` indica que todavía no tiene un ID asignado. Al guardarla,
+Room le asigna uno automáticamente.
+
+## 2. ¿Qué parte del objeto existe porque la necesita Room y qué parte pertenece al problema que modelamos?
+
+-   **Parte que necesita Room:** `id`, porque permite identificar de
+    manera única cada nota dentro de la base de datos.
+-   **Parte que pertenece al problema:** `titulo`, `contenido`,
+    `importante` y `creadaEn`, porque representan la información propia
+    de una nota.
+
+## 3. ¿Guardarías un `Painter`, un `Modifier` o un texto ya formateado dentro de esta entidad? ¿Por qué?
+
+No. `Painter` y `Modifier` pertenecen a la interfaz gráfica de Jetpack
+Compose, no a los datos de la nota. Tampoco guardaría un texto ya
+formateado, porque debería almacenar el contenido original y darle
+formato cuando se muestra en pantalla.
+
+La entidad debería contener únicamente datos que necesitemos persistir.
+
+## 4. Si mañana cambia el nombre de una propiedad, ¿eso puede afectar una base ya instalada?
+
+Sí. Room utiliza los nombres de las propiedades para relacionarlas con
+las columnas de la tabla. Si cambiamos el nombre de una propiedad, puede
+producirse un conflicto con una base de datos que ya existe.
+
+Para evitar problemas, debemos realizar una migración de la base de
+datos o utilizar `@ColumnInfo(name = "nombre_anterior")` para mantener
+el nombre de la columna existente.
