@@ -2,7 +2,9 @@ package ar.edu.uade.axelhiga.ejercicios.presentation.notas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ar.edu.uade.axelhiga.ejercicios.data.local.entity.CategoriaEntity
 import ar.edu.uade.axelhiga.ejercicios.data.local.entity.NotaEntity
+import ar.edu.uade.axelhiga.ejercicios.data.repository.CategoriaRepository
 import ar.edu.uade.axelhiga.ejercicios.data.repository.NotaRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +17,18 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
+class NotasViewModel(
+    private val repository: NotaRepository,
+    private val categoriaRepository: CategoriaRepository
+) : ViewModel() {
+
+    // Lista de categorías para mostrar en el dropdown
+    val categoriasDisponibles: StateFlow<List<CategoriaEntity>> = categoriaRepository.observarCategorias()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     // --- Filtros ---
     private val _searchQuery = MutableStateFlow("")
@@ -64,6 +77,9 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
     private val _importante = MutableStateFlow(false)
     val importante = _importante.asStateFlow()
 
+    private val _categoriaId = MutableStateFlow<Int?>(null)
+    val categoriaId = _categoriaId.asStateFlow()
+
     private val _codigoExterno = MutableStateFlow("")
     val codigoExterno = _codigoExterno.asStateFlow()
 
@@ -86,6 +102,7 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
     fun onContenidoChange(nuevoContenido: String) { _contenido.value = nuevoContenido }
     fun onImportanteChange(esImportante: Boolean) { _importante.value = esImportante }
     fun onCodigoExternoChange(nuevoCodigo: String) { _codigoExterno.value = nuevoCodigo }
+    fun onCategoriaChange(id: Int?) { _categoriaId.value = id }
     
     // Cargar nota para edición
     fun cargarNotaParaEdicion(nota: NotaEntity) {
@@ -94,6 +111,7 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
         _contenido.value = nota.contenido
         _importante.value = nota.importante
         _codigoExterno.value = nota.codigoExterno ?: ""
+        _categoriaId.value = nota.categoriaId
         _mensaje.value = ""
     }
 
@@ -109,6 +127,7 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
         _contenido.value = ""
         _codigoExterno.value = ""
         _importante.value = false
+        _categoriaId.value = null
     }
 
     // 3. Lógica de negocio (Validaciones e inserción/actualización)
@@ -135,7 +154,8 @@ class NotasViewModel(private val repository: NotaRepository) : ViewModel() {
                     titulo = tituloLimpio,
                     contenido = contenidoLimpio,
                     importante = _importante.value,
-                    codigoExterno = codigoLimpio
+                    codigoExterno = codigoLimpio,
+                    categoriaId = _categoriaId.value
                 )
 
                 if (idActual != null) {

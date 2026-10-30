@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -29,10 +31,14 @@ fun AgregarNotaScreen(
     val contenido by viewModel.contenido.collectAsState()
     val importante by viewModel.importante.collectAsState()
     val codigoExterno by viewModel.codigoExterno.collectAsState()
+    val categoriaId by viewModel.categoriaId.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
     val guardando by viewModel.guardando.collectAsState()
     val notaIdEnEdicion by viewModel.notaIdEnEdicion.collectAsState()
     val ultimaNotaEliminada by viewModel.ultimaNotaEliminada.collectAsState()
+    
+    // Categorías disponibles
+    val categoriasDisponibles by viewModel.categoriasDisponibles.collectAsState()
 
     // Estados de filtros y estadísticas
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -43,6 +49,11 @@ fun AgregarNotaScreen(
     
     // Estado para el cuadro de diálogo de eliminación
     var notaAEliminar by remember { mutableStateOf<NotaEntity?>(null) }
+    
+    // Estado para manejar si el dropdown está abierto
+    var expandedCategoria by remember { mutableStateOf(false) }
+    // Encontramos el nombre de la categoría actual seleccionada
+    val categoriaSeleccionada = categoriasDisponibles.find { it.id == categoriaId }?.nombre ?: "Sin categoría"
 
     Scaffold(
         topBar = {
@@ -82,14 +93,24 @@ fun AgregarNotaScreen(
             }
         }
     ) { paddingValues ->
+        // Envolvemos todo en una columna contenedora
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Campo de Título
+            // El formulario irá dentro de un bloque con un scroll vertical 
+            // (con peso para que no aplaste a la lista, sino que comparta el espacio)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f) // Ocupa la mitad del espacio
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Spacer(modifier = Modifier.height(8.dp))
+                // Campo de Título
             OutlinedTextField(
                 value = titulo,
                 onValueChange = { viewModel.onTituloChange(it) },
@@ -114,6 +135,43 @@ fun AgregarNotaScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+
+            // Selector de Categoría (Dropdown Menu)
+            ExposedDropdownMenuBox(
+                expanded = expandedCategoria,
+                onExpandedChange = { expandedCategoria = it }
+            ) {
+                OutlinedTextField(
+                    value = categoriaSeleccionada,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Categoría") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoria) },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    modifier = Modifier.fillMaxWidth().menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = true)
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedCategoria,
+                    onDismissRequest = { expandedCategoria = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Sin categoría") },
+                        onClick = {
+                            viewModel.onCategoriaChange(null)
+                            expandedCategoria = false
+                        }
+                    )
+                    categoriasDisponibles.forEach { categoria ->
+                        DropdownMenuItem(
+                            text = { Text(categoria.nombre) },
+                            onClick = {
+                                viewModel.onCategoriaChange(categoria.id)
+                                expandedCategoria = false
+                            }
+                        )
+                    }
+                }
+            }
 
             // Opción para marcar como importante
             Row(
@@ -183,12 +241,20 @@ fun AgregarNotaScreen(
             )
             
             Spacer(modifier = Modifier.height(8.dp))
+            
+            } // Cerramos la columna del formulario
 
-            // LazyColumn que reacciona a los cambios en el flujo del ViewModel
+            // El LazyColumn va por fuera del verticalScroll y ocupa su propia área (con peso)
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f) // Ocupa la otra mitad del espacio
+                    .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
                 items(
                     items = notas,
                     key = { nota -> nota.id } // Clave única para optimización

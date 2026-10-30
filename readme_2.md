@@ -304,3 +304,29 @@ Intentaría insertar dos notas diferentes con el mismo codigoExterno.
 Si el índice único está funcionando correctamente, la segunda inserción debería fallar o ser ignorada, dependiendo de la estrategia de conflicto elegida.
 También comprobaría los registros desde Database Inspector para verificar que no existan dos filas con el mismo código externo.
 
+## ¿Por qué no conviene guardar directamente una lista de notas dentro de una columna de categoría?
+En bases de datos relacionales (como SQLite/Room), guardar una lista o un arreglo (ej. `List<Nota>`) dentro de una sola celda de una columna viola la **Primera Forma Normal (1NF)**. SQLite no soporta listas nativamente. Para hacerlo funcionar en Room tendrías que convertir la lista a un String largo (ej. formato JSON) usando `TypeConverters`. 
+Hacer esto te quitaría todo el poder de las bases de datos: no podrías usar queries como `WHERE titulo = X` o contar las notas de forma eficiente, obligándote a deserializar el JSON en Kotlin constantemente, lo cual es lento e ineficiente.
+
+## ¿Dónde queda la clave foránea?
+En una relación "Uno a Muchos" (Una categoría tiene muchas notas), la **clave foránea siempre queda del lado de los "Muchos"**. 
+Es decir, la clave foránea es la columna `categoriaId` y queda guardada dentro de la tabla `notas` (en la clase `NotaEntity`).
+
+## ¿Qué debería ocurrir con las notas si se elimina una categoría?
+Depende puramente de las reglas de negocio de tu aplicación. 
+- Si decides que una nota **no puede** existir sin su categoría, deberías usar la política de borrado en cascada (`CASCADE`). Al borrar la categoría, todas las notas que contenían su ID se destruyen automáticamente.
+- Si decides que una nota **sí puede** existir sin categoría (es nuestro caso actual), las notas no deben borrarse. Su campo `categoriaId` debería pasar a valer `null`. En SQL y Room esto se logra configurando la política `SET_NULL`.
+
+## ¿Qué diferencia hay entre una entidad y una clase que sólo representa un resultado relacional?
+- Una **Entidad** (anotada con `@Entity`) se traduce directamente a una **Tabla** física real en la base de datos de SQLite.
+- Una **clase relacional** (como `CategoriaConNotas`, que usa `@Embedded` y `@Relation`) **no crea ninguna tabla**. Es simplemente un Objeto de Transferencia (POJO) que Room utiliza en la memoria (RAM) para empaquetar de forma cómoda la respuesta obtenida después de "cruzar" (hacer un JOIN/Querys) dos o más tablas reales que ya existen.
+
+### Desafío: Política de Borrado de ForeignKey
+Añadimos la regla de `ForeignKey` en el archivo `NotaEntity.kt`.
+Elegimos conscientemente la política `onDelete = ForeignKey.SET_NULL`. 
+Para que esto sea posible en Kotlin, declaramos la propiedad con un tipo de dato nulable: `val categoriaId: Int? = null`.
+
+**Efecto:**
+Si tuvieras 5 notas asociadas a la categoría "Estudios" (id=1), todas tendrían `categoriaId = 1` en la base de datos.
+Al ejecutar un `@Delete` sobre la categoría "Estudios", en vez de producirse un error o borrarse las notas, Room irá a la tabla `notas`, buscará esas 5 notas, y cambiará su `categoriaId` a `null`. Las notas sobrevivirán como notas huérfanas (sin categoría).
+

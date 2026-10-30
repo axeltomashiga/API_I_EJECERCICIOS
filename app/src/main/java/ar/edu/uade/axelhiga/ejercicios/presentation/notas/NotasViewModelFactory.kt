@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import ar.edu.uade.axelhiga.ejercicios.data.local.AppDatabase
+import ar.edu.uade.axelhiga.ejercicios.data.repository.CategoriaRepositoryImpl
 import ar.edu.uade.axelhiga.ejercicios.data.repository.NotaRepositoryImpl
 
 class NotasViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
@@ -12,8 +13,9 @@ class NotasViewModelFactory(private val context: Context) : ViewModelProvider.Fa
             val db = AppDatabase.getInstance(context)
             // Instanciamos la implementación concreta
             val repository = NotaRepositoryImpl(db.notaDao())
+            val categoriaRepository = CategoriaRepositoryImpl(db.categoriaDao())
             @Suppress("UNCHECKED_CAST")
-            return NotasViewModel(repository) as T
+            return NotasViewModel(repository, categoriaRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

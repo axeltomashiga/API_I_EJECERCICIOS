@@ -1,16 +1,28 @@
 package ar.edu.uade.axelhiga.ejercicios.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "notas",
+    // 3. Desafío: Foreign Key
+    // Si se borra la categoría a la que pertenece esta nota, el ID de la categoría en esta nota
+    // pasará a ser 'null' (SET_NULL), preservando la nota como "sin categoría".
+    foreignKeys = [
+        ForeignKey(
+            entity = CategoriaEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["categoriaId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ],
     indices = [
-        // 1. Índice único: Obliga a que no se repita el código externo
         Index(value = ["codigoExterno"], unique = true),
-        // 2. Índice no único: Optimiza el motor de base de datos para las búsquedas frecuentes por título
-        Index(value = ["titulo"])
+        Index(value = ["titulo"]),
+        // Buena práctica: Siempre indexar las columnas que son claves foráneas para acelerar joins
+        Index(value = ["categoriaId"])
     ]
 )
 data class NotaEntity(
@@ -19,6 +31,7 @@ data class NotaEntity(
     val contenido: String,
     val importante: Boolean = false,
     val codigoExterno: String? = null,
+    val categoriaId: Int? = null, // Puede existir una nota sin categoría
     val creadaEn: Long = System.currentTimeMillis(),
     val modificadaEn: Long = System.currentTimeMillis(),
     val archivada: Boolean = false

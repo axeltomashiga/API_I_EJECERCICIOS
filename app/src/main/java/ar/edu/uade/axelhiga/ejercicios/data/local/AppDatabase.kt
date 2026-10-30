@@ -4,17 +4,20 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import ar.edu.uade.axelhiga.ejercicios.data.local.dao.CategoriaDao
 import ar.edu.uade.axelhiga.ejercicios.data.local.dao.NotaDao
+import ar.edu.uade.axelhiga.ejercicios.data.local.entity.CategoriaEntity
 import ar.edu.uade.axelhiga.ejercicios.data.local.entity.NotaEntity
 
 @Database(
-    entities = [NotaEntity::class],
-    version = 2,
+    entities = [NotaEntity::class, CategoriaEntity::class],
+    version = 3,
     exportSchema = false // Recomendado en false si no configuras una ruta de exportación en Gradle
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun notaDao(): NotaDao
+    abstract fun categoriaDao(): CategoriaDao
 
     // Singleton para evitar múltiples instancias de la base de datos abierta al mismo tiempo
     companion object {
