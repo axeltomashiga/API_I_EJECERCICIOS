@@ -102,3 +102,18 @@ Preparándonos para la migración a bases de datos, aquí se define qué represe
 - **Clase de Base de Datos (Database class)**: Es una clase abstracta anotada con `@Database` que hereda de `RoomDatabase`. Es el "punto de entrada" principal. Contiene la configuración global de la base de datos (versión, qué entidades la componen) y expone los DAOs disponibles para que la app pueda usarlos.
 
 - **Repository (Repositorio)**: Es un patrón de arquitectura recomendado por Google. Es una clase normal que actúa como un intermediario entre el ViewModel (la lógica de la pantalla) y las fuentes de datos (el DAO de Room, un archivo de texto, o una API en internet). Su trabajo es decidir de dónde sacar los datos para que al ViewModel no le importe el origen.
+
+### ¿remember implica persistencia?
+No. remember permite conservar un estado durante las recomposiciones de Jetpack Compose, pero no guarda los datos permanentemente. Si se cierra la aplicación o se destruye el proceso, los datos se pierden. 
+
+### ¿Qué diferencia hay entre conservar estado ante recomposición y conservar datos al reiniciar el proceso?
+- Conservar estado ante recomposición: significa que los datos no se pierden cuando Compose vuelve a dibujar la pantalla. Para eso se utiliza remember.
+- Conservar datos al reiniciar el proceso: significa que los datos siguen existiendo aunque se cierre la aplicación y se vuelva a abrir. Para eso se necesita persistencia, por ejemplo, Room, DataStore o archivos. 
+
+### ¿Todos los datos de una pantalla deberían guardarse en una base?
+No. Solamente deberían persistirse los datos que necesitamos conservar después de cerrar la aplicación, como tareas, notas o configuraciones del usuario.
+
+Los datos temporales de la interfaz, como si un menú está desplegado o si un diálogo está abierto, generalmente no necesitan guardarse en una base de datos.
+
+### ¿Qué dato de los que probaste sería absurdo persistir?
+Sería absurdo persistir el estado de un menú desplegable, por ejemplo, si está abierto o cerrado, porque es un dato temporal de la interfaz que no tiene sentido conservar cuando el usuario cierra y vuelve a abrir la aplicación.
