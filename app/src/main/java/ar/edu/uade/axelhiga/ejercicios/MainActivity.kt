@@ -4,13 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import ar.edu.uade.axelhiga.ejercicios.data.local.AppDatabase
-import ar.edu.uade.axelhiga.ejercicios.data.local.entity.CategoriaEntity
-import ar.edu.uade.axelhiga.ejercicios.presentation.notas.AgregarNotaScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import ar.edu.uade.axelhiga.ejercicios.ej1.data.AppDatabase
+import ar.edu.uade.axelhiga.ejercicios.ej1.model.NotasEj1Repository
+import ar.edu.uade.axelhiga.ejercicios.ej1.view.NotasScreen
+import ar.edu.uade.axelhiga.ejercicios.ej1.viewmodel.NotasEj1ViewModelFactory
 import ar.edu.uade.axelhiga.ejercicios.ui.theme.EjerciciosTheme
-import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
 
@@ -20,21 +20,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             EjerciciosTheme {
                 val context = LocalContext.current
+                val db = AppDatabase.getInstance(context)
+                val repository = NotasEj1Repository(db.notaDao())
+                val factory = NotasEj1ViewModelFactory(repository)
                 
-                // Inicialización de datos (Semillas)
-                LaunchedEffect(Unit) {
-                    val db = AppDatabase.getInstance(context)
-                    val categoriaDao = db.categoriaDao()
-                    
-                    // Solo las insertamos si la tabla categorías está vacía
-                    val categoriasActuales = categoriaDao.obtenerCategoriasConNotas().first()
-                    if (categoriasActuales.isEmpty()) {
-                        categoriaDao.insert(CategoriaEntity(nombre = "Personal"))
-                        categoriaDao.insert(CategoriaEntity(nombre = "Trabajo"))
-                    }
-                }
-
-                AgregarNotaScreen()
+                NotasScreen(viewModel = viewModel(factory = factory))
             }
         }
     }

@@ -388,3 +388,52 @@ Para el campo `archivada: Boolean` (que en SQLite se almacena como `INTEGER 0` p
 Porque una migración determina **cómo se preserva y transforma la información histórica del usuario** a medida que la aplicación evoluciona.
 No se trata de una simple preferencia del entorno de compilación, sino de una decisión fundamental de arquitectura que garantiza la supervivencia de los datos de producción, define valores por defecto coherentes e impide que cambios en las entidades corrompan o borren la información almacenada.
 
+---
+
+## Ejercicio 1 — ¿Quién está haciendo demasiado?
+
+### Análisis y Esquema de Responsabilidades (App de Notas MVVM + Room)
+
+Se ha refactorizado la aplicación de notas para aislar responsabilidades, agrupando las clases en los paquetes `ej1.data`, `ej1.model`, `ej1.view` y `ej1.viewmodel`.
+
+La UI ahora es una "Vista Tonta" (`NotasScreen.kt`) que recibe órdenes y estado del `NotasEj1ViewModel.kt`, quien a su vez delega el guardado persistente en Room al `NotasEj1Repository.kt`.
+
+#### Esquema de Separación Actual
+
+| **View (Capa de Presentación / UI)** | **ViewModel (Lógica y Estado)** | **Model / Repository (Capa de Datos)** |
+| :--- | :--- | :--- |
+| **Dibujar la interfaz**: Muestra los `TextField`, el `Button`, los mensajes de error, y la lista de notas. | **Validación de datos**: Revisa que el título o contenido no estén en blanco en `onGuardarClick`. | **Interacción con SQLite**: Expone operaciones persistentes mediante el patrón `Dao` de Room. |
+| **Capturar y delegar eventos**: Detecta cuando se presiona "Guardar" y avisa al ViewModel. | **Ejecución de Casos de Uso**: Inicia una corrutina y pide al repositorio que guarde la nueva nota. | **Intento de guardado**: Guarda físicamente un `NotaEntity` en la base de datos de manera asíncrona. |
+| **Observación reactiva**: Escucha pasivamente los cambios de estado (mediante `collectAsStateWithLifecycle`) y se redibuja. | **Almacenamiento de estado temporal**: Mantiene en memoria el formulario (`NotasFormUiState`) mientras se escribe. | **Exposición de datos crudos**: Provee un `Flow<List<NotaEntity>>` directo desde la base de datos (Room). |
+
+---
+
+### Preguntas
+
+#### ¿Qué trabajo tendría que seguir funcionando aunque mañana cambiemos Compose por otra interfaz (ej. XML o Terminal)?
+Todo el trabajo encapsulado en el **ViewModel y en la capa de Datos (Repository/Room)** debería seguir operando idénticamente sin tocar ni una línea de código. Esto incluye:
+- Las **validaciones de negocio** (asegurarse de que el título no esté vacío antes de guardar).
+- La **persistencia de datos** (insertar registros en SQLite a través del DAO).
+- La **emisión de la lista histórica** (el `Flow` emitido desde Room hacia el estado).
+Al cambiar de Compose a XML, la única capa a reescribir sería `ej1.view`, que pasaría a observar las mismas variables reactivas (StateFlow) del ViewModel pre-existente.
+
+#### ¿Qué datos existen sólo mientras se está escribiendo un formulario?
+El **estado temporal de los campos de texto en edición**.
+Esos datos efímeros actualmente viven en el StateFlow `NotasFormUiState` (dentro del ViewModel) y existen únicamente como borrador mientras el usuario escribe en la pantalla. 
+Si el usuario navega hacia atrás o la aplicación se cierra de repente antes de que haga clic en "Guardar", esos caracteres parciales no llegan al `Repository` ni se persisten en Room, por lo cual se descartan y se pierden por diseño.
+
+### Desafío: Flujo Unidireccional (UDF)
+
+En nuestro código (MVVM), la UI interactúa con el estado siguiendo este ciclo riguroso de una sola vía:
+
+```text
+ 1. EVENTO DEL USUARIO: "viewModel.onGuardarClick()"
+ ------------------------------------------------------>
+|                                                       |
+|   VIEW (Compose)                       VIEWMODEL / REPOSITORY (Room)
+|                                                       |
+ <------------------------------------------------------
+ 2. ESTADO QUE VUELVE: Emisión reactiva desde StateFlow (Lista Actualizada)
+```
+
+
