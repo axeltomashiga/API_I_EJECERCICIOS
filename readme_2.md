@@ -436,4 +436,41 @@ En nuestro código (MVVM), la UI interactúa con el estado siguiendo este ciclo 
  2. ESTADO QUE VUELVE: Emisión reactiva desde StateFlow (Lista Actualizada)
 ```
 
+---
+
+## Ejercicio 2 — Una pantalla no es su estado
+
+### Análisis e Implementación
+
+En este ejercicio se creó el paquete `ej2` conteniendo:
+1. Una *data class* de estado estricto: `NotasEj2UiState`
+2. Una clase sellada de eventos: `NotasEj2Event`
+3. El `NotasEj2ViewModel` que procesa los eventos y actualiza el estado.
+4. La vista `NotasEj2Screen` que se dibuja *exclusivamente* basada en la data class.
+
+El guardado se simula mediante una corrutina y `delay` para observar el ciclo de carga.
+
+#### Tabla "Evento -> Cambio de Estado Esperado" (Desafío)
+
+| Evento (`NotasEj2Event`) | Modificación en `NotasEj2UiState` (Cambio esperado) |
+| :--- | :--- |
+| `OnTituloChange("H")` | `titulo` pasa a ser `"H"`. `errorValidacion` se vuelve `null` (se borra). |
+| `OnContenidoChange("M")` | `contenido` pasa a ser `"M"`. `errorValidacion` se vuelve `null`. |
+| `OnGuardarClick` (Vacío) | Si está vacío: `errorValidacion` cambia a "El título/contenido es obligatorio". |
+| `OnGuardarClick` (Válido) | `guardando` cambia a `true`. (Esto desactiva los textfields y muestra un loader). |
+| *Fin del Delay Interno* | `guardando` a `false`. `titulo` y `contenido` a `""`. `mensajeExito` se llena. |
+| `OnMensajeExitoMostrado` | `mensajeExito` vuelve a `null` (para que no se vuelva a mostrar el Toast al rotar la pantalla). |
+
+---
+
+### Preguntas
+
+#### ¿El texto ingresado es lo mismo que la nota ya guardada?
+**No.**
+El texto que se está ingresando es el "borrador" temporal de la pantalla (actualmente reflejado en `titulo` y `contenido` de la *data class* de estado). Solo se convierte en una "nota guardada" (información persistente y valiosa) después de pasar las validaciones del negocio y de concluir el proceso asíncrono de guardado.
+
+#### ¿Conviene mostrar el mensaje de error como parte del estado?
+**Sí, absolutamente.**
+En Compose (y en general en UDF), la pantalla debe ser un reflejo puro y exacto del estado en ese milisegundo. Si existe un error (por ejemplo "El título es obligatorio"), este *es* parte de la realidad actual del usuario. Al incluir `val errorValidacion: String?` en la *data class*, nos aseguramos de que Compose redibuje automáticamente el texto en rojo bajo los campos, y que ese error sobreviva si la pantalla se recarga (rotación) hasta que el usuario cambie el texto y el estado lo vuelva a poner en `null`.
+
 

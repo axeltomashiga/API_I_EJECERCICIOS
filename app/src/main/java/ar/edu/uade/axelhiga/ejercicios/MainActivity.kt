@@ -10,6 +10,7 @@ import ar.edu.uade.axelhiga.ejercicios.ej1.data.AppDatabase
 import ar.edu.uade.axelhiga.ejercicios.ej1.model.NotasEj1Repository
 import ar.edu.uade.axelhiga.ejercicios.ej1.view.NotasScreen
 import ar.edu.uade.axelhiga.ejercicios.ej1.viewmodel.NotasEj1ViewModelFactory
+import ar.edu.uade.axelhiga.ejercicios.ej2.NotasEj2Screen
 import ar.edu.uade.axelhiga.ejercicios.ui.theme.EjerciciosTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,12 +20,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             EjerciciosTheme {
-                val context = LocalContext.current
-                val db = AppDatabase.getInstance(context)
-                val repository = NotasEj1Repository(db.notaDao())
-                val factory = NotasEj1ViewModelFactory(repository)
-                
-                NotasScreen(viewModel = viewModel(factory = factory))
+                // Comentamos la vista del Ejercicio 1 para usar la del Ejercicio 2
+                // val context = LocalContext.current
+                // val db = AppDatabase.getInstance(context)
+                // val repository = NotasEj1Repository(db.notaDao())
+                // val factory = NotasEj1ViewModelFactory(repository)
+                // NotasScreen(viewModel = viewModel(factory = factory))
+
+                // Pantalla del Ejercicio 2
+                NotasEj2Screen()
             }
         }
     }
