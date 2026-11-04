@@ -473,4 +473,31 @@ El texto que se está ingresando es el "borrador" temporal de la pantalla (actua
 **Sí, absolutamente.**
 En Compose (y en general en UDF), la pantalla debe ser un reflejo puro y exacto del estado en ese milisegundo. Si existe un error (por ejemplo "El título es obligatorio"), este *es* parte de la realidad actual del usuario. Al incluir `val errorValidacion: String?` en la *data class*, nos aseguramos de que Compose redibuje automáticamente el texto en rojo bajo los campos, y que ese error sobreviva si la pantalla se recarga (rotación) hasta que el usuario cambie el texto y el estado lo vuelva a poner en `null`.
 
+---
+
+## Ejercicio 3 — Primer ViewModel, sin magia
+
+### Implementación y Pruebas
+Se creó el paquete `ej3` aislando la lógica en una clase `NotasEj3ViewModel` que hereda explícitamente de `androidx.lifecycle.ViewModel`.
+
+#### ¿Qué sucede al rotar el emulador?
+Si el usuario escribe "Comprar pan" en el título y se rota la pantalla (lo que destruye y recrea la `Activity`), **el texto "Comprar pan" se mantiene intacto**.
+Esto ocurre porque la función `viewModel()` de Compose intercepta la destrucción de la vista, retiene la instancia única del ViewModel en memoria, y se la vuelve a inyectar a la pantalla recién recreada junto con su `StateFlow` intacto.
+
+#### Desafío: El Contador de Vida
+Se añadió el atributo `val intentosGuardado: Int = 0` al estado. Cada vez que se intenta guardar una nota, el ViewModel lo incrementa. 
+- Si guardamos 3 veces, el contador dice `3`.
+- Si rotamos la pantalla, el contador **sigue diciendo `3`**.
+- La consola imprime `¡Instancia Creada!` sólo una vez al iniciar. No vuelve a imprimirse al rotar. Esto demuestra visualmente que el ViewModel no muere ante cambios de configuración.
+
+### Preguntas
+
+#### ¿Qué problema resuelve el ViewModel?
+El ViewModel resuelve el problema crítico de la **supervivencia del estado de presentación frente a los cambios de configuración** de Android (rotación de pantalla, cambio a modo oscuro, redimensionamiento multi-ventana, cambio de idioma).
+Normalmente, todos estos eventos provocan que el sistema operativo destruya y vuelva a crear la `Activity` o `Fragment` desde cero, borrando cualquier variable alojada en ellos. El ViewModel proporciona un refugio seguro (fuera del ciclo de vida de la Activity) para almacenar datos temporales de UI y ejecutar trabajos asíncronos pesados (corrutinas) sin que se interrumpan por una simple rotación.
+
+#### ¿Qué sucederá si el proceso se elimina completamente?
+Si el sistema operativo mata el proceso entero por falta de memoria (System-Initiated Process Death), **el ViewModel también será destruido** y su estado en memoria RAM se perderá (se ejecutará su método `onCleared()`). 
+En este escenario extremo, al reabrir la app, el ViewModel se instanciará desde cero. Para sobrevivir a este caso particular, se debería utilizar `SavedStateHandle` (para datos pequeños de UI) o una base de datos persistente como Room (para la información valiosa, que es precisamente nuestro objetivo final).
+
 
