@@ -500,4 +500,38 @@ Normalmente, todos estos eventos provocan que el sistema operativo destruya y vu
 Si el sistema operativo mata el proceso entero por falta de memoria (System-Initiated Process Death), **el ViewModel también será destruido** y su estado en memoria RAM se perderá (se ejecutará su método `onCleared()`). 
 En este escenario extremo, al reabrir la app, el ViewModel se instanciará desde cero. Para sobrevivir a este caso particular, se debería utilizar `SavedStateHandle` (para datos pequeños de UI) o una base de datos persistente como Room (para la información valiosa, que es precisamente nuestro objetivo final).
 
+---
+
+## Ejercicio 4 — StateFlow: la pantalla observa
+
+### Implementación
+Se creó el paquete `ej4` donde se exponen estrictamente dos variables para manejar el estado en `NotasEj4ViewModel`:
+1. `private val _uiState`: Mutable, sólo modificable desde dentro del ViewModel.
+2. `val uiState: StateFlow<...>`: Observable, de sólo lectura para la vista.
+
+En la vista (`NotasEj4Screen`), este estado se recolecta utilizando `collectAsStateWithLifecycle()`, lo que asegura que las recolecciones se detengan automáticamente cuando la pantalla pasa a segundo plano, ahorrando recursos de CPU y memoria.
+
+### Preguntas
+
+#### ¿Por qué la pantalla no debería poder modificar directamente `_uiState`?
+Para respetar el **Flujo de Datos Unidireccional (UDF)** y mantener el **Single Source of Truth (Única Fuente de Verdad)**. 
+Si la pantalla pudiera acceder y mutar libremente a `_uiState.value = nuevoEstado`, estaríamos saltándonos el ViewModel. Esto provocaría que los datos se modifiquen sin pasar por las reglas de validación (lógica de negocio) y dificultaría enormemente rastrear bugs, ya que cualquier componente UI en cualquier lugar podría alterar los datos arbitrariamente. Obligando a la vista a usar métodos como `actualizarTitulo(nuevoTitulo)`, garantizamos que el ViewModel tenga el control total sobre *cuándo* y *cómo* muta el estado.
+
+#### ¿Qué parte se recompone?
+Se recomponen **exclusivamente aquellos Composables que leen directamente las propiedades del estado que acaban de cambiar** (Smart Recomposition).
+Por ejemplo, si se ejecuta `actualizarTitulo("A")`, el valor de `uiState.titulo` muta. Jetpack Compose evaluará el árbol y *solo* redibujará el `TextField` correspondiente al Título (que usa esa propiedad). El `TextField` del Contenido no se recompondrá porque su estado subyacente no sufrió alteraciones.
+
+### Desafío (Registrar cambios puntuales y comprobar)
+
+El código del ViewModel se implementó utilizando el método `.copy()` de las data classes de Kotlin:
+
+```kotlin
+fun actualizarTitulo(nuevoTitulo: String) {
+    _uiState.value = _uiState.value.copy(titulo = nuevoTitulo)
+}
+```
+
+Al utilizar `.copy(titulo = nuevoTitulo)`, Kotlin clona el objeto inmutable actual y genera una nueva instancia exacta, pero **reemplazando únicamente el campo `titulo`** y preservando intacto el valor pre-existente en `contenido`. 
+Gracias a esto, podemos escribir en el Título, luego pasar a escribir en el Contenido, y confirmar que el texto del Título **no se borra**, demostrando que el estado global se mantiene consistente y se actualiza de manera aislada (puntual).
+
 
