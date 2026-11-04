@@ -565,4 +565,232 @@ En `NotasEj5Screen`, aprovechamos el atributo nativo `supportingText` de los `Te
 Conviene limpiarlo (establecerlo en `null` en el estado) **en el momento preciso en que el usuario intenta corregirlo**, es decir, durante la pulsación de una nueva tecla (`onValueChange`). 
 Si el usuario ve que el campo falló porque estaba vacío, apenas tipea una letra el estado debe reaccionar mediante `onEvent(OnTituloChange("a"))` y limpiar el error (`errorTitulo = null`). Esto mejora enormemente la experiencia de usuario (UX) al darle feedback visual inmediato de que su corrección está siendo procesada, sin obligarlo a presionar el botón "Guardar" de nuevo solo para quitar el color rojo.
 
+---
 
+## Ejercicio 6 — Repository: cambiar datos sin cambiar la pantalla
+
+### Implementación
+
+Se definió el **Contrato** agnóstico (`NotaRepository.kt`), estableciendo las reglas para cualquier fuente de datos (obtenerTodas, guardar, eliminar). Luego se implementó concretamente en memoria mediante `NotaRepositoryInMemoryImpl.kt`, que usa un `MutableStateFlow` interno para almacenar las notas en una lista RAM (sin Room, sin Base de Datos). 
+
+En el `MainActivity.kt`, se inyectó esta versión *falsa* o *en memoria* al `NotasEj6ViewModelFactory`. 
+
+Como el `NotasEj6ViewModel` sólo habla con el contrato (la `interface`), **ignora completamente** que los datos no se están guardando de verdad en el celular, por lo cual todo su código funciona de manera transparente.
+
+### Preguntas
+
+#### ¿Qué conoce el Repository sobre Compose?
+**Absolutamente nada.** 
+El patrón Repository pertenece a la capa de Datos del proyecto. No conoce (ni debe conocer) absolutamente ningún detalle sobre Material Design, `Scaffold`, composables, colores de error ni sobre la librería de Jetpack Compose en sí. Su único conocimiento está basado en flujos de datos puros de Kotlin (`Flow`, `suspend fun`) y en las entidades o modelos de negocio puros (`Nota`).
+
+#### ¿Por qué esta interfaz ayuda a probar la app?
+Al depender de una `interface` (`NotaRepository`) en lugar de depender directamente de una clase que maneja una Base de Datos física (como Room/SQLite), **aplicamos el Principio de Inversión de Dependencias (SOLID)**.
+Esto es vital para probar (Testear) la aplicación:
+1. **Pruebas Unitarias del ViewModel:** Podemos inyectarle un Repositorio Falso o Simulacro (`FakeRepository` / Mock) al ViewModel que devuelva listas prediseñadas al instante, lo que permite testear las reglas de negocio rápidamente sin inicializar ni tocar el lento disco duro o base de datos.
+2. **Prototipado UI Rápido:** Como hicimos en esta entrega, pudimos construir toda la aplicación funcional con un *Repository In-Memory* sin haber escrito ni una sola línea de SQL ni creado las entidades de Room todavía.
+
+#### Decidir si el resultado de "obtenerTodas" se devuelve como valor puntual (`List<Nota>`) o como `Flow<List<Nota>>` y justificarlo:
+Se decidió (y se implementó) que **se devuelva como un `Flow<List<Nota>>`**.
+**Justificación:**
+Si se devolviera como valor puntual (`suspend fun obtenerTodas(): List<Nota>`), la UI requeriría que el desarrollador pida manualmente los datos cada vez que ocurra un cambio (agregado/borrado).
+Devolviendo un **Flow**, establecemos una conexión reactiva directa (un *stream* de datos constante) con la base de datos o almacenamiento. Si otra pantalla, o una sincronización de fondo con la red, actualiza, guarda o borra una nota del Repositorio, **el Flow emitirá automáticamente la nueva lista de notas**, y la UI se actualizará al instante por sí sola sin necesidad de invocar ninguna función manual de recarga (ni siquiera en el ViewModel local).
+
+---
+
+## Ejercicio 7 — Leer un archivo de texto desde el Repository
+
+### Implementación
+Se creó el paquete `ej7`.
+Se implementó `ArchivoTextoRepository.kt` utilizando una clase sellada exhaustiva `ResultadoLectura` (con `Exito`, `NoExiste`, y `ErrorFalla`). El ViewModel invoca el repositorio y publica el estado en la interfaz mediante `estadoLecturaInfo`. 
+A su vez, en la pantalla se incluyeron un TextField y un Button extra puramente de "Prueba Manual" (Test) para poder inyectar texto al archivo `borrador.txt`, permitiendo corroborar el funcionamiento real de la lectura/escritura física en el almacenamiento del dispositivo.
+
+### Preguntas
+
+#### Si el archivo todavía no existe, devolver texto vacío o un resultado explícito; dejar por escrito cuál de las dos decisiones se tomó:
+Se decidió **devolver un resultado explícito**.
+En el repositorio de la aplicación se optó por crear una `sealed class ResultadoLectura` y devolver el caso `ResultadoLectura.NoExiste`.
+**Motivo:** Si simplemente se devolviera un `""` (texto vacío), el ViewModel (y por tanto la Vista) no podrían diferenciar matemáticamente si el usuario creó un borrador que casualmente está en blanco o si el archivo literalmente no existe (es la primera vez que se abre la app). Devolver `NoExiste` le permite a la Vista tomar decisiones de UI (ej. mostrar el texto "El archivo borrador.txt aún no existe", como se implementó en este ejercicio).
+
+#### ¿Dónde está físicamente el archivo?
+El archivo `borrador.txt` se encuentra guardado físicamente en el almacenamiento **interno y privado** que Android le asigna a esta aplicación específica. 
+A nivel de sistema de archivos (en el celular físico o emulador), la ruta suele ser:
+`/data/data/ar.edu.uade.axelhiga.ejercicios/files/borrador.txt`.
+A esta ruta llegamos instanciando la variable `context.filesDir`.
+
+#### ¿Otra app puede leerlo sin más?
+**No.**
+Los archivos guardados dentro del directorio `filesDir` (Almacenamiento Interno) son estrictamente privados. El sistema operativo Android (usando sandboxing de Linux basado en UID) prohíbe terminantemente que cualquier otra aplicación acceda, lea o modifique este archivo. Solo la propia aplicación (o un dispositivo con permisos de `root`) puede visualizarlo.
+
+---
+
+## Ejercicio 8 — Guardar texto, cerrar y volver
+
+### Implementación
+Se creó el paquete `ej8`. 
+En el `BorradorRepository`, se agregó la función `escribirBorrador` que utiliza `archivo.writeText(texto, Charsets.UTF_8)` (sobrescritura total) envolviéndolo en un bloque de `Dispatchers.IO`. 
+El `NotasEj8ViewModel` se modificó para que apenas nace, en su bloque `init {}`, lance automáticamente una corrutina para leer el contenido del disco y cargarlo en la UI, garantizando así la recuperación de los datos guardados luego de cerrar o matar la aplicación.
+
+### Preguntas
+
+#### ¿Se sobrescribe todo el archivo o se agrega al final?
+**Se sobrescribe todo el archivo.** 
+En el Repositorio utilicé la función nativa `writeText()`, la cual destruye el contenido previo del archivo y escribe el nuevo texto desde cero. 
+**Justificación (Documentación de la decisión):** Dado que estamos guardando el estado actual de "un borrador", lo que el usuario quiere conservar es exactamente lo que ve en la pantalla en ese instante. Si hubiese optado por agregar texto al final (ej. `appendText()`), cada vez que el usuario clickeara "Guardar" la nota se duplicaría, generando un registro gigante e ilegible del historial de guardados.
+
+#### ¿Qué diferencia hay entre el estado del ViewModel y los datos en disco?
+- **El estado del ViewModel (`textoFormulario`)** vive exclusivamente en la **Memoria RAM** del dispositivo (y de forma volátil). Este estado es rapidísimo de leer y escribir (se actualiza instantáneamente con cada pulsación del teclado), pero si la app se cierra o el proceso es destruido, desaparece para siempre.
+- **Los datos en disco (`borrador_ej8.txt`)** viven en el **Almacenamiento Físico Secundario** (Flash/SSD del celular). Persisten aunque el celular se apague o se cierre la aplicación (supervivencia a largo plazo), pero escribir allí es una operación "lenta" que requiere mover los datos desde la RAM hacia el sistema de archivos (bloqueos de I/O).
+En la aplicación implementada, ambos ecosistemas se sincronizan exclusivamente cuando el usuario oprime voluntariamente el botón "Guardar Físico".
+
+#### ¿Qué pasa con los caracteres acentuados y los saltos de línea?
+Se **preservan perfectamente** gracias al uso de la codificación `Charsets.UTF_8` en la lectura y escritura.
+`UTF-8` es capaz de mapear y almacenar sin pérdida todos los caracteres latinos (ñ, á, é, í) así como los caracteres de escape como el salto de línea `\n` insertados por el `OutlinedTextField` de Compose al apretar Enter.
+
+### Desafío (Botón "Descartar Cambios")
+
+En la UI de `NotasEj8Screen`, se añadió un botón delineado rojo ("Descartar") a un costado de "Guardar Físico".
+Al hacer click, se invoca `viewModel.onDescartarClick()`, función que descarta de raíz el estado volatil/efímero que existía en el `_uiState` del ViewModel, forzando una re-lectura total del repositorio (`repository.leerBorrador()`) sobreescribiendo lo que el usuario tenía tipeado en pantalla por la versión "segura" recuperada desde el disco duro.
+
+---
+
+## Ejercicio 9 — Cargando, listo o falló
+
+### Implementación
+
+Se modeló la clase sellada estricta `EstadoCarga` (`Cargando`, `Listo`, `Fallo(mensaje)`).
+En el paquete `ej9`, el ViewModel cuenta con dos estados de carga independientes (uno para la lectura al inicio y otro para la escritura manual).
+En `NotasEj9ViewModel.kt` se envuelve cada operación del repositorio dentro de un `try-catch`, de esta forma el hilo de ejecución sigue su curso y actualizamos el valor de la variable de estado apuntando a la rama `EstadoCarga.Fallo` en caso de error para que la UI le avise al usuario, evitando que la app sufra un *crash* (force close).
+Para probar las fallas, se implementó una segunda clase `CargaRepositoryErrorSimulado` que reemplaza al repositorio de I/O original en el factory del `MainActivity`, lanzando explícitamente `IllegalStateException`.
+
+### Preguntas
+
+#### ¿Qué excepción no conviene capturar silenciosamente?
+No conviene capturar ni comerse de forma general las **Excepciones de Cancelación (`CancellationException`)**.
+Cuando utilizamos Corrutinas (`viewModelScope.launch`), el framework maneja el ciclo de vida lanzando esta excepción especial de forma estructurada para avisarle a las corrutinas que el ViewModel (o la Activity) acaba de ser destruido y deben detenerse inmediatamente para liberar recursos (ej. detener el consumo de memoria o red). 
+Si capturamos esta excepción con un burdo `catch (e: Exception)` y no la propagamos (haciendo un `throw e`), la corrutina ignorará la solicitud de cancelación y seguirá trabajando en segundo plano o "zombificada", generando severas pérdidas de memoria (*memory leaks*) e inconsistencias impredecibles en el sistema.
+
+#### ¿Por qué un mensaje “Guardado” sólo corresponde después de completar la escritura?
+Un mensaje de éxito (como "Guardado") es una afirmación categórica que la aplicación le da al usuario de que su información ahora reside sana y salva en un sistema de persistencia (ej. en el disco duro o en el servidor).
+Si emitiéramos este estado *antes* o *durante* el proceso de escritura (`repository.escribirTexto()`), estaríamos asumiendo un escenario ideal donde nada sale mal. Sin embargo, en el mundo real, el dispositivo puede no tener espacio físico en memoria libre disponible en ese milisegundo, la base de datos puede estar corrupta o no haber conexión. Si el mensaje se muestra y simultáneamente ocurre la excepción real por detrás, el usuario perdería los datos pensando que "todo estaba bien". 
+El mensaje "Guardado" siempre debe ubicarse en la siguiente línea sincrónica *después* de que la capa de datos retornó la confirmación de éxito.
+
+---
+
+## Ejercicio 10 — De un texto a una lista persistente
+
+### Implementación
+Se implementó en el paquete `ej10` la persistencia de una lista entera de notas usando como formato físico nativo un array **JSON** puro (`JSONArray` de `org.json`), guardado en el archivo `notas_persistentes.json` en lugar de utilizar simples separadores por punto y coma (split).
+
+El **Repository (`ListaBorradorRepository`)** maneja las operaciones de lectura (parseando el array), escritura completa y eliminación, cuidando leer todo, modificar la estructura en memoria y sobrescribir un JSON nuevo en un solo bloque para evitar desincronizaciones ("Transacción plana").
+
+El **ViewModel (`NotasEj10ViewModel`)** expone las operaciones CRUD completas y maneja las variables temporales de formulario y un nuevo `idEditando` para permitir que, al hacer click en el lápiz, la nota suba a la interfaz, se edite, y al volver a hacer click en el botón reemplace a su versión anterior sin crear un duplicado.
+
+### Preguntas
+
+#### ¿Cómo se representa una nota vacía?
+Una nota vacía se representa instanciando un objeto cuyas propiedades textuales (`titulo` y `contenido`) contienen **Strings vacíos** (`""`) o se establecen como `null` (si el diseño lo permite). 
+En nuestro ViewModel `NotasEj10ViewModel`, hemos implementado la regla por consigna de **evitar que el usuario guarde una nota así**: 
+`if (titulo.isBlank() && contenido.isBlank()) return` corta el guardado de forma temprana, prohibiendo materializar notas fantasma en la lista.
+
+#### ¿Qué hace el lector si el contenido está incompleto?
+Nuestro Repositorio (`ListaBorradorRepository.kt`) envuelve toda la lectura y el *parsing* del `JSONArray` en un bloque `try-catch`. Si el lector de JSON de Android se encuentra con un archivo cortado a la mitad, caracteres corruptos (incompletos) o claves faltantes que no pueden procesarse, arrojará una `JSONException`. Al capturarla y retornar silenciosamente un `emptyList()`, aseguramos que **la aplicación no crashee**, devolviendo al usuario una pizarra limpia para empezar a escribir sin que su aplicación se rompa.
+
+#### ¿Qué se perdería si se reescribe mal el archivo?
+Si la aplicación falla justo en el momento físico en que la función `archivo.writeText()` está sobrescribiendo el archivo plano en el disco duro, o si guardamos un *String* mal formateado, **se perdería absolutamente toda la base de datos** (todas las notas creadas hasta el momento).
+Este es el mayor riesgo y fragilidad de persistir manualmente en un archivo de texto plano: es un proceso no atómico (todo o nada) carente de mecanismos de protección y transacciones *Rollback* automáticas. Por este motivo en Android es un estándar ineludible migrar a sistemas formales de Base de Datos como SQLite (a través de Room).
+
+---
+
+## Ejercicio 11 — Dependencias: ¿quién crea el Repository?
+
+### Implementación
+En ejercicios anteriores, el `Repository` y el `Factory` del `ViewModel` eran creados torpemente dentro de la vista (en `setContent {}` de `MainActivity`), lo cual obligaba a extraer un `Context` de la interfaz (`LocalContext.current`) e instanciar lógica de negocio en la capa gráfica. 
+
+Para este ejercicio creamos un paquete `ej11` que soluciona esto a través de **Inyección de Dependencias Manual**:
+1. Se creó `AppContainer.kt` como una fábrica explícita en la capa de aplicación, que posee un atributo `by lazy` para instanciar el Repositorio de forma compartida.
+2. Se creó la clase `MyApplication` (registrada en `AndroidManifest.xml`) para instanciar globalmente el `AppContainer` una sola vez en el `onCreate()`.
+3. El `MainActivity.kt` extrae el Factory listo para usarse pidiéndoselo a `(application as MyApplication).container`, evitando generar los repositorios y contextos de UI.
+
+### Preguntas
+
+#### ¿Qué se ganarían al reemplazar el Repository sin tocar el ViewModel?
+Se gana una total **desvinculación (desacople) entre la capa de Presentación y la de Datos**.
+Si el día de mañana queremos que la aplicación deje de guardar en un archivo local y pase a sincronizarse con una base de datos en la nube (ej. Firebase), simplemente escribimos un `NuevoFirebaseRepositoryImpl`, lo registramos en el `AppContainer`, y el ViewModel **no sufre ninguna alteración en su código fuente** (Principio Abierto/Cerrado - OCP). 
+El ViewModel sigue confiando en que "alguien" le proveerá el contrato, y al no ser él quien construye la base de datos, queda protegido de los cambios arquitectónicos inferiores.
+
+#### ¿Qué instancia debe compartir la app?
+La app debe compartir **una única instancia del `Repository`** (y, si existiese, la conexión al archivo/base de datos subyacente).
+Si cada pantalla o ViewModel construyera su propia instancia nueva de `Repository` (haciendo un `val repo = MiRepository()`), tendríamos múltiples objetos intentando leer y escribir en el mismo archivo físico (`borrador.txt`) simultáneamente. Esto provocaría condiciones de carrera (*Race Conditions*), sobreescritura sucia y corrupción de datos. Al tener una instancia compartida global en la clase `Application`, aseguramos consistencia y una "Única Fuente de la Verdad".
+
+---
+
+## Ejercicio 12 — Dos pantallas, una información
+
+### Implementación (Patrón SSOT)
+Para este ejercicio dividimos el monolito anterior en dos `Composables` independientes interconectados por la biblioteca **Navigation Compose** (`NavHost`).
+1. **La Pantalla de Lista (`ListaEj12Screen`)** que solo muestra los items.
+2. **La Pantalla de Editor (`EditorEj12Screen`)** que se abre al tocar una nota y recibe el ID por ruta (`"editor?id=..."`).
+
+Ambas pantallas cuentan con su propio y exclusivo ViewModel (`ListaEj12ViewModel` y `EditorEj12ViewModel`), pero **ambos fueron inyectados con el mismo y único Repositorio (`NotaEj12Repository`)** pre-instanciado en el contenedor global de la `Application`.
+Al tener el Repositorio centralizando un `MutableStateFlow` de la lista, cuando el Editor termina de guardar sus cambios en el repositorio, la propiedad reactiva muta, emitiendo automáticamente la nueva lista hacia la pantalla principal apenas regresamos.
+
+### Preguntas
+
+#### ¿Qué ocurre si las dos pantallas guardan una copia distinta de la lista?
+Si la Lista tuviera su propia memoria (`List<Nota>`) desconectada del Editor, incurriríamos en el temido problema de la **Doble Fuente de la Verdad**.
+Si editamos la "Nota 1" en la pantalla de Editor, al volver hacia atrás la pantalla de Lista no sabría que ocurrió un cambio, seguiría renderizando la copia "vieja" de los datos, desincronizando lo que ve el usuario con la realidad almacenada. Para solucionarlo, tendríamos que programar engorrosas devoluciones de resultados (`SavedStateHandle`, paso de bundles, onResume), pero gracias al patrón de *Single Source Of Truth (SSOT)* centralizado reactivamente en el Repositorio (vía `StateFlow`), este problema desaparece por completo.
+
+#### ¿Qué dato tiene sentido recordar sólo en la navegación?
+**El identificador de la entidad (el ID).**
+La consigna pedía explícitamente evitar pasar el objeto completo de la Nota serializado entre las rutas de navegación (antipatrón común). 
+El único dato que tiene sentido pasar por URL/Arguments en un Navigation Graph es un simple `String` o `Int` que sirva como "clave primaria". La pantalla de destino (en este caso el Editor) toma ese `ID`, va a consultarle a la Fuente de la Verdad central (el Repositorio) y recupera la entidad completa y fresca. Así se evita traficar grandes volúmenes de datos por la memoria de parcelamiento del SO y garantizamos trabajar siempre con la última versión real del dato.
+
+---
+
+## Ejercicio 13 — Probar el ViewModel sin Android ni archivos
+
+### Implementación y Archivos
+Para este ejercicio se añadió la dependencia `kotlinx-coroutines-test` en `build.gradle.kts` para permitir manipular el tiempo virtual de las corrutinas durante los tests.
+En el directorio `app/src/test/.../ej13` se creó el archivo `NotasEj9ViewModelTest.kt`, conteniendo:
+
+1. **`FakeCargaRepository` (El Repositorio Falso / Mock)**:
+  - Una clase que implementa el contrato `CargaRepository` pero no utiliza `File`, `Context` ni librerías de Android. Solo lee y guarda `Strings` en una variable de memoria RAM (`textoGuardado`), permitiendo simular fallas alterando *flags* booleanos (`forzarErrorLectura = true`).
+
+2. **Controladores de Corrutinas (Despachadores)**:
+  - Se incorporó un `StandardTestDispatcher()`.
+  - **Justificación de su función:** En las pruebas unitarias (JVM nativa, fuera de un celular real), no existe el hilo principal `Dispatchers.Main` de Android. Como el `viewModelScope.launch` utiliza obligatoriamente el hilo `Main`, si ejecutamos la prueba directamente, arrojará una excepción `IllegalStateException`. Utilizando el método `Dispatchers.setMain(testDispatcher)` en el `@Before` y su respectivo `resetMain()` en `@After`, reemplazamos el bucle principal de Android por nuestro propio despachador virtual de tiempo de prueba, permitiendo avanzar el reloj sincrónicamente con `advanceUntilIdle()` y examinar el estado sin tener que poner pausas `Thread.sleep` (lo cual haría los test pesados y defectuosos).
+
+3. **Pruebas Escritas**:
+  - `cargaInicial exitosa recupera el texto del repositorio`
+  - `cargaInicial fallida muestra EstadoCarga Fallo`
+  - `guardado correcto avisa Listo y envia datos al repo`
+  - `error de escritura atrapa la excepcion y muestra Fallo`
+
+### Preguntas
+
+#### ¿Qué prueba quedaría innecesariamente difícil si el ViewModel creara su propio Repository?
+Probar el **manejo de fallas o respuestas asíncronas lentas**.
+Si el ViewModel hiciera `val repo = CargaRepositoryImpl(context)` por sí mismo dentro de su código fuente, nos sería **imposible** inyectarle el `FakeCargaRepository` desde la clase de Test. Por ende, la única forma que tendríamos de probar cómo se comporta el ViewModel cuando "el disco falla", sería forzar mágicamente o alterar el disco real del servidor de integración continua (CI/CD) para que se rompa, lo cual es inestable, muy difícil y técnicamente una prueba de integración ("flaky test"), dejando de ser una prueba unitaria rápida y aislada.
+
+#### ¿Qué sí habría que probar en una prueba de integración con archivo real?
+En una prueba de integración o instrumentada (carpeta `androidTest`) utilizando el archivo físico real y un `Context` verdadero de Android, deberíamos probar:
+- Si nuestra aplicación posee el **permiso** correcto para escribir en la partición de almacenamiento designada (`SecurityException`).
+- El comportamiento bajo **restricciones de espacio** o cuotas de disco alcanzadas (`IOException`).
+- Si la **codificación de caracteres** al guardar (ej. `Charsets.UTF_8`) realmente escribe y recupera correctamente caracteres especiales (ñ, á, emojis) desde el archivo binario del sistema operativo Android.
+
+---
+## Ejercicio 14
+
+#### ¿Quién transforma Entity en modelo de dominio si son distintos?
+**El Repository.**
+El repositorio actúa como el "Traductor" de la arquitectura. En nuestro código de `NotaEj14RepositoryRoomImpl.kt`, dentro de la función `map`, tomamos los objetos brutos de base de datos (`NotaEntity`) y construimos manualmente los objetos limpios de la aplicación (`Nota`). De este modo, la UI y el ViewModel jamás llegan a enterarse de que debajo de la app existe SQLite, Room o llaves primarias autogeneradas.
+
+#### ¿Qué gana el ViewModel al no conocer SQL?
+Gana una **Cohesión total y Alta Testabilidad**.
+Al ViewModel no le importan las columnas, las llaves foráneas ni los tipos de datos de SQLite (`INTEGER`, `TEXT`). Su trabajo es aplicar reglas de presentación y reaccionar a lo que aprieta el usuario. Si lo desacoplamos del SQL:
+1. Sus Unit Tests correrán rapidísimo en la JVM.
+2. Si el día de mañana migramos la persistencia de SQLite a Firebase Realtime Database (JSON NoSQL), el código del ViewModel no sufrirá ni un solo cambio, cumpliendo el principio Open/Closed de SOLID.
+
+#### ¿Qué sucede si hay dos fuentes de verdad sin política clara?
+Se genera la temida **Desincronización de Estado**.
+Si un desarrollador decide usar simultáneamente un Repositorio de Archivos y un Repositorio de Room, y permite que distintas pantallas editen la información en distintos repositorios sin una política clara de sincronización (Ej. *Network-bound resource*, donde Room es la fuente única y la red es solo un espejo esclavo), la aplicación mostrará datos distintos o contradictorios dependiendo en qué pantalla se encuentre el usuario, perdiendo datos silenciosamente al sobreescribirse entre sí.
