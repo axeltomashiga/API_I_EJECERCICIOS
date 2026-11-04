@@ -13,6 +13,7 @@ import ar.edu.uade.axelhiga.ejercicios.ej1.viewmodel.NotasEj1ViewModelFactory
 import ar.edu.uade.axelhiga.ejercicios.ej2.NotasEj2Screen
 import ar.edu.uade.axelhiga.ejercicios.ej3.NotasEj3Screen
 import ar.edu.uade.axelhiga.ejercicios.ej4.NotasEj4Screen
+import ar.edu.uade.axelhiga.ejercicios.ej5.NotasEj5Screen
 import ar.edu.uade.axelhiga.ejercicios.ui.theme.EjerciciosTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,13 +23,13 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             EjerciciosTheme {
-                // Comentamos vistas anteriores
                 // NotasScreen(...)
                 // NotasEj2Screen()
                 // NotasEj3Screen()
+                // NotasEj4Screen()
 
-                // Pantalla del Ejercicio 4
-                NotasEj4Screen()
+                // Pantalla del Ejercicio 5
+                NotasEj5Screen()
             }
         }
     }

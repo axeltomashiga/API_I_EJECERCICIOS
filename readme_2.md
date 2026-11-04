@@ -534,4 +534,35 @@ fun actualizarTitulo(nuevoTitulo: String) {
 Al utilizar `.copy(titulo = nuevoTitulo)`, Kotlin clona el objeto inmutable actual y genera una nueva instancia exacta, pero **reemplazando únicamente el campo `titulo`** y preservando intacto el valor pre-existente en `contenido`. 
 Gracias a esto, podemos escribir en el Título, luego pasar a escribir en el Contenido, y confirmar que el texto del Título **no se borra**, demostrando que el estado global se mantiene consistente y se actualiza de manera aislada (puntual).
 
+---
+
+## Ejercicio 5 — Validar sin esconder la regla en un botón
+
+### Implementación
+
+Se creó el paquete `ej5` y la clase `NotasEj5ViewModel` para alojar estrictamente la lógica de validación de negocio fuera de la Vista. Las reglas que se codificaron en `validarYGuardar()` son:
+- **Título no vacío**: `titulo.isNotBlank()`.
+- **Contenido de al menos 10 caracteres**: `contenido.trim().length >= 10`.
+- **Prohibición de guardar dos veces**: Evaluando `if (_uiState.value.guardando) return`.
+ 
+En `NotasEj5Screen`, aprovechamos el atributo nativo `supportingText` de los `TextField` de Material 3 para desplegar los errores directamente por debajo de los campos de texto, junto a `isError = true` para teñir el componente de rojo, sin utilizar diálogos molestos.
+
+### Preguntas
+
+#### ¿Cuál es una regla de negocio y cuál es una decisión visual?
+- **Reglas de Negocio:**
+  - Que el contenido deba tener 10 caracteres como mínimo.
+  - Que el título no pueda estar vacío o contener puros espacios en blanco.
+  - Que el sistema impida una doble solicitud a la base de datos o red.
+  *(Todo esto le pertenece al ViewModel y al Modelo).*
+- **Decisiones Visuales:**
+  - Que el error se muestre debajo de la caja de texto (`supportingText`).
+  - Que la caja de texto se tiña de color rojo (`isError = true`).
+  - Mostrar un *toast* o una barra de progreso circular mientras se espera.
+  *(Todo esto le pertenece estrictamente a la View / Jetpack Compose).*
+
+#### ¿En qué momento conviene limpiar un mensaje de error?
+Conviene limpiarlo (establecerlo en `null` en el estado) **en el momento preciso en que el usuario intenta corregirlo**, es decir, durante la pulsación de una nueva tecla (`onValueChange`). 
+Si el usuario ve que el campo falló porque estaba vacío, apenas tipea una letra el estado debe reaccionar mediante `onEvent(OnTituloChange("a"))` y limpiar el error (`errorTitulo = null`). Esto mejora enormemente la experiencia de usuario (UX) al darle feedback visual inmediato de que su corrección está siendo procesada, sin obligarlo a presionar el botón "Guardar" de nuevo solo para quitar el color rojo.
+
 
